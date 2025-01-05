@@ -1,15 +1,16 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
-import 'HomePage.dart';
+import 'package:orderq/pages/SignupWithCredentials.dart';
+import 'HomePage.dart'; // Import the HomePage for successful login navigation
 
-class SignupWithCredentials extends StatelessWidget {
-  const SignupWithCredentials({super.key});
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign Up'),
+        title: const Text('Login'),
         backgroundColor: const Color(0xFF00122D), // Match AppBar with theme
       ),
       body: Container(
@@ -32,23 +33,8 @@ class SignupWithCredentials extends StatelessWidget {
             children: [
               TextField(
                 decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                keyboardType: TextInputType.name,
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
                   labelText: 'Email',
-                  labelStyle: const TextStyle(color: Colors.white70),
+                  labelStyle: const TextStyle(color: Colors.white70), // Same style as SignUp
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.1),
                   border: OutlineInputBorder(
@@ -63,7 +49,7 @@ class SignupWithCredentials extends StatelessWidget {
               TextField(
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  labelStyle: const TextStyle(color: Colors.white70),
+                  labelStyle: const TextStyle(color: Colors.white70), // Same style as SignUp
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.1),
                   border: OutlineInputBorder(
@@ -77,7 +63,7 @@ class SignupWithCredentials extends StatelessWidget {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Replace this with sign-up logic
+                  // Replace this with authentication logic
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -85,7 +71,7 @@ class SignupWithCredentials extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text('Sign Up'),
+                child: const Text('Login'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53E3C6),
                   foregroundColor: Colors.white,
@@ -95,11 +81,16 @@ class SignupWithCredentials extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  // Navigate back to Login page
-                  Navigator.pop(context);
+                  // Navigate to the Sign-Up page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SignupWithCredentials(),
+                    ),
+                  );
                 },
                 child: const Text(
-                  "Already have an account? Login",
+                  "Don't have an account? Sign Up",
                   style: TextStyle(color: Colors.white),
                 ),
               ),
