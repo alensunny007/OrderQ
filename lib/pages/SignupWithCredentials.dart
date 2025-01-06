@@ -1,6 +1,6 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
-import 'HomePage.dart';
+import 'homePage.dart';
 
 class SignupWithCredentials extends StatelessWidget {
   const SignupWithCredentials({super.key});
