@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:orderq/utils/cart_data.dart';
+import 'package:orderq/utils/favour_data.dart'; // Adjust this import path according to your project structure
 
-class CartPage extends StatelessWidget {
+class FavoritesPage extends StatelessWidget {
+  final List<Map<String, dynamic>> favoriteItems;
+
+  // Constructor for passing the favoriteItems list
+  FavoritesPage({required this.favoriteItems});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
+      appBar: AppBar(
+        title: const Text("Favorites"),
+        backgroundColor: const Color(0xFF00122D),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -17,21 +25,17 @@ class CartPage extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
         ),
-        child: cartItems.isEmpty
+        child: favoriteItems.isEmpty
             ? const Center(
                 child: Text(
-                  "Your cart is empty!",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  "No favorites added yet!",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               )
             : ListView.builder(
-                itemCount: cartItems.length,
+                itemCount: favoriteItems.length,
                 itemBuilder: (context, index) {
-                  final item = cartItems[index];
+                  final item = favoriteItems[index];
                   return Card(
                     color: const Color(0xFF12243A),
                     margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -42,31 +46,19 @@ class CartPage extends StatelessWidget {
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.asset(
-                          item['imageUrl'], // Corrected key for the image URL
+                          item['imageUrl'],
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
                         ),
                       ),
                       title: Text(
-                        item['title'], // Corrected key for the title
+                        item['title'],
                         style: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                       subtitle: Text(
-                        '₹${item['price']}', // Corrected key for the price
+                        '₹${item['price']}',
                         style: const TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          // Handle item removal (optional)
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${item['title']} removed from cart!'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        },
                       ),
                     ),
                   );

@@ -8,10 +8,7 @@ class SignupWithCredentials extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign Up'),
-        backgroundColor: const Color(0xFF00122D), // Match AppBar with theme
-      ),
+     
       body: Container(
         width: double.infinity,
         height: double.infinity,

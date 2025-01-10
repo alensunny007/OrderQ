@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:orderq/utils/favour_data.dart';
 import 'package:orderq/utils/food_data.dart'; // Import the food data
-
-
+import 'cart.dart'; // Import the CartPage
+import 'favourites.dart'; // Import the FavoritesPage
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,22 +14,32 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   TextEditingController _searchController = TextEditingController();
+  List<bool> _isInCart = List.generate(foodItems.length, (_) => false); // List to track cart status
+  List<bool> _isFavorite = List.generate(foodItems.length, (_) => false); // List to track favorite status
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (index == 2) {
+      // Navigate to CartPage when cart icon is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CartPage()),
+      );
+    } else if (index == 3) {
+      // Navigate to FavoritesPage when favorite icon is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => FavoritesPage(favoriteItems: favouriteItems)),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 9, 42, 93),
-        title: const Text('OrderQ',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
-      ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -47,12 +58,17 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Hello , User", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "Hello , User",
+                    style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 14.0),
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search',
@@ -80,7 +96,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 14.0),
                 child: GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -88,7 +104,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 0.75, // Adjust to give space for the details
+                    childAspectRatio: 0.75,
                   ),
                   itemCount: foodItems.length,
                   itemBuilder: (context, index) {
@@ -102,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
                               blurRadius: 6,
@@ -139,7 +155,9 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       Text(
                                         foodItems[index]['price'],
-                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.teal),
+                                        style: const TextStyle(fontSize: 14, 
+                                        fontWeight: FontWeight.bold, 
+                                        color: Colors.teal),
                                       ),
                                     ],
                                   ),
@@ -147,12 +165,39 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.only(left: 8, right: 8),
                               child: Text(
                                 foodItems[index]['description'],
                                 style: const TextStyle(fontSize: 12, color: Colors.black54),
                               ),
                             ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isFavorite[index] = !_isFavorite[index];
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.favorite,
+                                    color: _isFavorite[index] ? Colors.red : Colors.black,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isInCart[index] = !_isInCart[index];
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.shopping_cart,
+                                    color: _isInCart[index] ? Colors.red : Colors.black,
+                                  ),
+                                ),
+                              ],
+                            )
                           ],
                         ),
                       ),

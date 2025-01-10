@@ -8,10 +8,7 @@ class Signup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Welcome to OrderQ'),
-        backgroundColor: const Color(0xFF00122D),
-      ),
+      
       body: Container(
         width: double.infinity,
         height: double.infinity,
