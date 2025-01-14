@@ -1,69 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:orderq/utils/favour_data.dart'; // Adjust this import path according to your project structure
 
 class FavoritesPage extends StatelessWidget {
   final List<Map<String, dynamic>> favoriteItems;
 
-  // Constructor for passing the favoriteItems list
-  FavoritesPage({required this.favoriteItems});
+  const FavoritesPage({super.key, required this.favoriteItems});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Favorites"),
-        backgroundColor: const Color(0xFF00122D),
-      ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF00122D), // Dark blue
-              Color(0xFF53E3C6), // Teal
+              Color(0xFF53E3C6),
+              Color(0xFF00122D),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        child: favoriteItems.isEmpty
-            ? const Center(
+        child: Column(
+          children: [
+            const SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
                 child: Text(
-                  "No favorites added yet!",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
+                  "Favorites",
+                  style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
                 ),
-              )
-            : ListView.builder(
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
                 itemCount: favoriteItems.length,
                 itemBuilder: (context, index) {
-                  final item = favoriteItems[index];
                   return Card(
-                    color: const Color(0xFF12243A),
-                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ListTile(
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          item['imageUrl'],
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
+                        child: Image.asset(favoriteItems[index]['imageUrl'], width: 60, height: 60, fit: BoxFit.cover),
                       ),
-                      title: Text(
-                        item['title'],
-                        style: const TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                      subtitle: Text(
-                        '₹${item['price']}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      title: Text(favoriteItems[index]['title']),
+                      subtitle: Text("₹${favoriteItems[index]['price']}"),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          // Logic for removing items
+                        },
                       ),
                     ),
                   );
                 },
               ),
+            ),
+          ],
+        ),
       ),
     );
   }

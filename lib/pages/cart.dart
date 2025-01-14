@@ -1,77 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:orderq/utils/cart_data.dart';
+import 'package:orderq/utils/food_data.dart';
 
 class CartPage extends StatelessWidget {
+  const CartPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF00122D), // Dark blue
-              Color(0xFF53E3C6), // Teal
+              Color(0xFF53E3C6),
+              Color(0xFF00122D),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        child: cartItems.isEmpty
-            ? const Center(
+        child: Column(
+          children: [
+            const SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
                 child: Text(
-                  "Your cart is empty!",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  "My Cart",
+                  style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
                 ),
-              )
-            : ListView.builder(
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
                 itemCount: cartItems.length,
                 itemBuilder: (context, index) {
-                  final item = cartItems[index];
                   return Card(
-                    color: const Color(0xFF12243A),
-                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ListTile(
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          item['imageUrl'], // Corrected key for the image URL
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
+                        child: Image.asset(cartItems[index]['imageUrl'], width: 60, height: 60, fit: BoxFit.cover),
                       ),
-                      title: Text(
-                        item['title'], // Corrected key for the title
-                        style: const TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                      subtitle: Text(
-                        '₹${item['price']}', // Corrected key for the price
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
+                      title: Text(cartItems[index]['title']),
+                      subtitle: Text("₹${cartItems[index]['price']}"),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () {
-                          // Handle item removal (optional)
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${item['title']} removed from cart!'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          // Logic for removing items
                         },
                       ),
                     ),
                   );
                 },
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
