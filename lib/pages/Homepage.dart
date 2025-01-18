@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'cart.dart';
 import 'favourites.dart';
-import 'profile.dart'; // Import the ProfilePage
+import 'profile.dart';
+import 'contact_us.dart'; // Import the ContactUsPage
 import 'package:orderq/utils/food_data.dart';
 import 'package:orderq/utils/favour_data.dart';
 
@@ -19,8 +20,8 @@ class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
 
   // Toggle cart and favorites
-  List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
-  List<bool> _isFavorite = List.generate(foodItems.length, (_) => false);
+  final List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
+  final List<bool> _isFavorite = List.generate(foodItems.length, (_) => false);
 
   void _onItemTapped(int index) {
     setState(() {
@@ -44,7 +45,7 @@ class _HomePageState extends State<HomePage> {
           const ProfilePage(), // Profile page
           CartPage(), // Cart page
           FavoritesPage(favoriteItems: favouriteItems), // Favorites page
-          const Placeholder(), // Contact Us page (implement as needed)
+          const ContactUsPage(), // Contact Us page
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

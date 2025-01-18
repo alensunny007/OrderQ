@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:orderq/pages/cart.dart';
 import 'pages/loading.dart';
 
 void main() {

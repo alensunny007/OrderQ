@@ -119,19 +119,19 @@ class _ProfilePageState extends State<ProfilePage> {
       enabled: isEditing,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white, fontSize: 16),
+        labelStyle: const TextStyle(color: Colors.black, fontSize: 16),
         filled: true,
         fillColor: Colors.white.withOpacity(0.8),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(50),
           borderSide: const BorderSide(color: Colors.white),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(50),
           borderSide: const BorderSide(color: Colors.white),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(50),
           borderSide: const BorderSide(color: Colors.teal),
         ),
       ),
