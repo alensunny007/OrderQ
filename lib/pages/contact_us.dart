@@ -81,7 +81,7 @@ class ContactUsPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'vda21cs009@cev.ac.in',
+                  'citvcape@gmail.com',
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.white,
@@ -89,7 +89,7 @@ class ContactUsPage extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.copy, color: Colors.white),
-                  onPressed: () => _copyToClipboard(context, 'vda21cs009@cev.ac.in'),
+                  onPressed: () => _copyToClipboard(context, 'citvcape@gmail.com'),
                 ),
               ],
             ),

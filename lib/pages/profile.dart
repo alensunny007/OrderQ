@@ -119,23 +119,23 @@ class _ProfilePageState extends State<ProfilePage> {
       enabled: isEditing,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.black, fontSize: 16),
+        labelStyle: const TextStyle(color: Colors.white70), // Match LoginPage style
         filled: true,
-        fillColor: Colors.white.withOpacity(0.8),
+        fillColor: Colors.white.withOpacity(0.1), // Match LoginPage fill color and opacity
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
-          borderSide: const BorderSide(color: Colors.white),
+          borderRadius: BorderRadius.circular(30), // Match LoginPage border radius
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
-          borderSide: const BorderSide(color: Colors.white),
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(50),
-          borderSide: const BorderSide(color: Colors.teal),
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.teal), // Match focus color
         ),
       ),
-      style: const TextStyle(fontSize: 16),
+      style: const TextStyle(color: Colors.white, fontSize: 16), // Match LoginPage text style
     );
   }
 }

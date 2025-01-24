@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "846930146318",
-    "project_id": "orderq-7281d",
-    "storage_bucket": "orderq-7281d.firebasestorage.app"
+    "project_number": "662778001564",
+    "project_id": "orderq-cms",
+    "storage_bucket": "orderq-cms.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:846930146318:android:772d4eb0c62aca7c14b85f",
+        "mobilesdk_app_id": "1:662778001564:android:a6b19950e33cb9201b9559",
         "android_client_info": {
           "package_name": "com.example.orderq"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDIkRqRPu46QtjdHwYW4B2LpCPtWb9fmnc"
+          "current_key": "AIzaSyDy4P2H5d-xRZdfDFuDfpJBcomsXDbOj00"
         }
       ],
       "services": {

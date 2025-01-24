@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  String selectedOption = 'Canteen'; // Moved here to manage state globally
 
   // Page controllers to manage the pages
   final PageController _pageController = PageController();
@@ -109,7 +110,17 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             _buildSearchBar(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildOptionButton("Canteen"),
+                  _buildOptionButton("Cafeteria"),
+                ],
+              ),
+            ),
             _buildFoodGrid(),
           ],
         ),
@@ -144,6 +155,26 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildOptionButton(String option) {
+    bool isSelected = selectedOption == option;
+
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          selectedOption = option; // Update selected option
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected ? Colors.amber : Colors.white,
+        foregroundColor: isSelected ? Colors.black : Colors.grey[800],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Text(option),
     );
   }
 

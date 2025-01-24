@@ -48,7 +48,7 @@ class Signup extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               SizedBox(
-                width: double.infinity,
+                width: 110,
                 height: 40, // Fixed button height
                 child: ElevatedButton(
                   onPressed: () {
@@ -73,7 +73,7 @@ class Signup extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               SizedBox(
-                width: double.infinity,
+                width: 110,
                 height: 40, // Fixed button height
                 child: OutlinedButton(
                   onPressed: () {

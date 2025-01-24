@@ -29,11 +29,13 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF00122D), // Dark blue from the logo
-              Color(0xFF53E3C6), // Teal from the logo
+              Color(0xFF00122D), // Dark blue
+              Color(0xFF53E3C6), // Teal
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -43,8 +45,22 @@ class _LoadingScreenState extends State<LoadingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Add your app logo
-              Image.asset('assets/profile.png', height: 200), // Replace with your logo path
+              // App logo
+              Image.asset(
+                'assets/images/logo-orderq.png', // Replace with your actual logo path
+                height: 200,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 20), // Spacing below the logo
+              const Text(
+                'OrderQ', // App title
+                style: TextStyle(
+                  fontSize: 36, // Large font size
+                  fontWeight: FontWeight.bold, // Bold text
+                  color: Colors.white, // White color for contrast
+                  letterSpacing: 2.0, // Optional spacing for elegance
+                ),
+              ),
             ],
           ),
         ),
