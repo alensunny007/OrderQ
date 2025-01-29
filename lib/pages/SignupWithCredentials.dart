@@ -1,14 +1,26 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
-import 'homePage.dart';
+import 'package:orderq/services/auth_services.dart'; // Import the AuthService
+import 'package:fluttertoast/fluttertoast.dart';
+import 'homePage.dart'; // Import the HomePage
 
-class SignupWithCredentials extends StatelessWidget {
+class SignupWithCredentials extends StatefulWidget {
   const SignupWithCredentials({super.key});
+
+  @override
+  _SignupWithCredentialsState createState() => _SignupWithCredentialsState();
+}
+
+class _SignupWithCredentialsState extends State<SignupWithCredentials> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _universityIdController = TextEditingController();
+
+  final AuthService _authService = AuthService(); // Instantiate AuthService
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -28,6 +40,7 @@ class SignupWithCredentials extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
+                controller: _fullNameController,
                 decoration: InputDecoration(
                   labelText: 'Full Name',
                   labelStyle: const TextStyle(color: Colors.white70),
@@ -43,6 +56,23 @@ class SignupWithCredentials extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _universityIdController,
+                decoration: InputDecoration(
+                  labelText: 'University ID',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                keyboardType: TextInputType.text,
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle: const TextStyle(color: Colors.white70),
@@ -58,6 +88,7 @@ class SignupWithCredentials extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   labelStyle: const TextStyle(color: Colors.white70),
@@ -73,14 +104,44 @@ class SignupWithCredentials extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  // Replace this with sign-up logic
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HomePage(),
-                    ),
-                  );
+                onPressed: () async {
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+
+                  if (email.isEmpty || password.isEmpty) {
+                    Fluttertoast.showToast(
+                      msg: 'Please fill in all fields.',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: Colors.black54,
+                      textColor: Colors.white,
+                      fontSize: 14.0,
+                    );
+                    return;
+                  }
+
+                  try {
+                    await _authService.signup(
+                      email: email,
+                      password: password,
+                      context: context,
+                    );
+
+                    // If signup is successful, navigate to HomePage
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()),
+                    );
+                  } catch (e) {
+                    Fluttertoast.showToast(
+                      msg: 'Signup failed: $e',
+                      toastLength: Toast.LENGTH_LONG,
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: Colors.redAccent,
+                      textColor: Colors.white,
+                      fontSize: 14.0,
+                    );
+                  }
                 },
                 child: const Text('Sign Up'),
                 style: ElevatedButton.styleFrom(
@@ -92,7 +153,6 @@ class SignupWithCredentials extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  // Navigate back to Login page
                   Navigator.pop(context);
                 },
                 child: const Text(

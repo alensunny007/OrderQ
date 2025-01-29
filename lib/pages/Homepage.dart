@@ -5,6 +5,7 @@ import 'profile.dart';
 import 'contact_us.dart'; // Import the ContactUsPage
 import 'package:orderq/utils/food_data.dart';
 import 'package:orderq/utils/favour_data.dart';
+import 'package:orderq/utils/cafeteria_data.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,12 +16,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  String selectedOption = 'Canteen'; // Moved here to manage state globally
+  String selectedOption = 'Canteen'; // Managing selected option
 
-  // Page controllers to manage the pages
   final PageController _pageController = PageController();
 
-  // Toggle cart and favorites
   final List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
   final List<bool> _isFavorite = List.generate(foodItems.length, (_) => false);
 
@@ -28,7 +27,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = index;
     });
-    _pageController.jumpToPage(index); // Switch between pages
+    _pageController.jumpToPage(index);
   }
 
   @override
@@ -42,11 +41,11 @@ class _HomePageState extends State<HomePage> {
           });
         },
         children: [
-          _buildHomePage(), // Home page
-          const ProfilePage(), // Profile page
-          CartPage(), // Cart page
-          FavoritesPage(favoriteItems: favouriteItems), // Favorites page
-          const ContactUsPage(), // Contact Us page
+          _buildHomePage(),
+          const ProfilePage(),
+          CartPage(),
+          FavoritesPage(favoriteItems: favouriteItems),
+          const ContactUsPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -56,26 +55,11 @@ class _HomePageState extends State<HomePage> {
         selectedItemColor: const Color(0xFF53E3C6),
         unselectedItemColor: Colors.black,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'MyCart',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favourites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.contact_mail),
-            label: 'Contact Us',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'MyCart'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favourites'),
+          BottomNavigationBarItem(icon: Icon(Icons.contact_mail), label: 'Contact Us'),
         ],
       ),
     );
@@ -87,10 +71,7 @@ class _HomePageState extends State<HomePage> {
       height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFF53E3C6),
-            Color(0xFF00122D),
-          ],
+          colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -134,11 +115,7 @@ class _HomePageState extends State<HomePage> {
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search',
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Colors.black,
-            size: 24,
-          ),
+          prefixIcon: const Icon(Icons.search, color: Colors.black, size: 24),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
@@ -164,7 +141,7 @@ class _HomePageState extends State<HomePage> {
     return ElevatedButton(
       onPressed: () {
         setState(() {
-          selectedOption = option; // Update selected option
+          selectedOption = option;
         });
       },
       style: ElevatedButton.styleFrom(
@@ -179,6 +156,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFoodGrid() {
+    List<Map<String, dynamic>> displayItems =
+        selectedOption == "Canteen" ? foodItems : cafefoodItems;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14.0),
       child: GridView.builder(
@@ -188,9 +168,9 @@ class _HomePageState extends State<HomePage> {
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.75,
+          childAspectRatio: 0.75, // Adjusted to prevent overflow
         ),
-        itemCount: foodItems.length,
+        itemCount: displayItems.length,
         itemBuilder: (context, index) {
           return Card(
             shape: RoundedRectangleBorder(
@@ -203,11 +183,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: Offset(0, 4),
-                  ),
+                  BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -216,7 +192,7 @@ class _HomePageState extends State<HomePage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.asset(
-                      foodItems[index]['imageUrl'],
+                      displayItems[index]['imageUrl'],
                       width: double.infinity,
                       height: 120,
                       fit: BoxFit.cover,
@@ -227,30 +203,28 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          foodItems[index]['title'],
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                        Expanded(
+                          child: Text(
+                            displayItems[index]['title'],
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        Row(
-                          children: [
-                            const Text(
-                              '₹',
-                              style: TextStyle(color: Colors.teal, fontSize: 16),
-                            ),
-                            Text(
-                              foodItems[index]['price'],
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.teal),
-                            ),
-                          ],
+                        Text(
+                          '₹${displayItems[index]['price']}',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.teal),
                         ),
                       ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Text(
-                      foodItems[index]['description'] ?? '',
+                      displayItems[index]['description'] ?? '',
                       style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Row(
@@ -262,10 +236,7 @@ class _HomePageState extends State<HomePage> {
                             _isFavorite[index] = !_isFavorite[index];
                           });
                         },
-                        icon: Icon(
-                          Icons.favorite,
-                          color: _isFavorite[index] ? Colors.red : Colors.black,
-                        ),
+                        icon: Icon(Icons.favorite, color: _isFavorite[index] ? Colors.red : Colors.black),
                       ),
                       IconButton(
                         onPressed: () {
@@ -273,10 +244,7 @@ class _HomePageState extends State<HomePage> {
                             _isInCart[index] = !_isInCart[index];
                           });
                         },
-                        icon: Icon(
-                          Icons.shopping_cart,
-                          color: _isInCart[index] ? Colors.red : Colors.black,
-                        ),
+                        icon: Icon(Icons.shopping_cart, color: _isInCart[index] ? Colors.red : Colors.black),
                       ),
                     ],
                   ),
