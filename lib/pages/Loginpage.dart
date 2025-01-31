@@ -2,11 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
 import 'package:fluttertoast/fluttertoast.dart'; // For displaying toast messages
-import 'package:orderq/pages/SignupWithCredentials.dart';
+import 'package:orderq/Canteen/Cafeteria/cafHome.dart';
+import 'package:orderq/Students/stuHome.dart';
+import 'package:orderq/pages/Signupby.dart';
 import 'HomePage.dart'; // Import the HomePage for successful login navigation
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,12 +103,8 @@ class LoginPage extends StatelessWidget {
                       fontSize: 14.0,
                     );
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomePage(),
-                      ),
-                    );
+                    route(context); // Call the route method after successful login
+
                   } on FirebaseAuthException catch (e) {
                     String errorMessage;
                     switch (e.code) {
@@ -144,7 +144,7 @@ class LoginPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SignupWithCredentials(),
+                      builder: (context) => const Signupas(),
                     ),
                   );
                 },
@@ -158,5 +158,40 @@ class LoginPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void route(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+        if (documentSnapshot.get('roll') == 'cafe') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Admin not approved yet, Please contact the admin'),
+            ),
+          );
+        } else if (documentSnapshot.get('roll') == 'student') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StuHomePage(userId: documentSnapshot.id)),
+            );
+          
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CafHomePage(userId: documentSnapshot.id),
+            ),
+          );
+        }
+      } else {
+        print('Document does not exist on the database');
+      }
+    });
   }
 }

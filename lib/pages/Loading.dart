@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'signup.dart';
 
-class LoadingScreen extends StatefulWidget {
-  const LoadingScreen({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  _LoadingScreenState createState() => _LoadingScreenState();
+  _SplashScreen createState() => _SplashScreen();
 }
 
-class _LoadingScreenState extends State<LoadingScreen> {
+class _SplashScreen extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();

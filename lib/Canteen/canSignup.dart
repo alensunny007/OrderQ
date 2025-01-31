@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:orderq/pages/Homepage.dart';
+import 'package:orderq/pages/loginpage.dart';
 import 'package:orderq/services/auth_services.dart'; // Import the AuthService
-import 'package:fluttertoast/fluttertoast.dart';
-import 'homePage.dart'; // Import the HomePage
-
-class SignupWithCredentials extends StatefulWidget {
-  const SignupWithCredentials({super.key});
+import 'package:fluttertoast/fluttertoast.dart'; // Import the HomePage
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
+ 
+class Cansignup extends StatefulWidget {
+  const Cansignup({super.key});
 
   @override
-  _SignupWithCredentialsState createState() => _SignupWithCredentialsState();
+  // ignore: library_private_types_in_public_api
+  _Cansignup createState() => _Cansignup();
 }
 
-class _SignupWithCredentialsState extends State<SignupWithCredentials> {
+class _Cansignup extends State<Cansignup> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
-  final _universityIdController = TextEditingController();
+  final _Phoneno = TextEditingController();
 
   final AuthService _authService = AuthService(); // Instantiate AuthService
 
@@ -54,22 +58,7 @@ class _SignupWithCredentialsState extends State<SignupWithCredentials> {
                 keyboardType: TextInputType.name,
                 style: const TextStyle(color: Colors.white),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _universityIdController,
-                decoration: InputDecoration(
-                  labelText: 'University ID',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                keyboardType: TextInputType.text,
-                style: const TextStyle(color: Colors.white),
-              ),
+              
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
@@ -102,13 +91,31 @@ class _SignupWithCredentialsState extends State<SignupWithCredentials> {
                 obscureText: true,
                 style: const TextStyle(color: Colors.white),
               ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _Phoneno,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(color: Colors.white),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   final email = _emailController.text.trim();
                   final password = _passwordController.text.trim();
+                  final name = _fullNameController.text.trim();
+                  final mobileNumber = _Phoneno.text.trim();
 
-                  if (email.isEmpty || password.isEmpty) {
+                  if (email.isEmpty || password.isEmpty || name.isEmpty || mobileNumber.isEmpty) {
                     Fluttertoast.showToast(
                       msg: 'Please fill in all fields.',
                       toastLength: Toast.LENGTH_SHORT,
@@ -127,10 +134,24 @@ class _SignupWithCredentialsState extends State<SignupWithCredentials> {
                       context: context,
                     );
 
-                    // If signup is successful, navigate to HomePage
+                    // If signup is successful, add user details to Firestore
+                    User? user = FirebaseAuth.instance.currentUser;
+                    if (user != null) {
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user.uid)
+                          .set({
+                        'name': name,
+                        'email': email,
+                        'mobileNumber': mobileNumber,
+                        'roll': 'Cafe',
+                      });
+                    }
+
+                    // Navigate to HomePage
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
                     );
                   } catch (e) {
                     Fluttertoast.showToast(
@@ -153,7 +174,10 @@ class _SignupWithCredentialsState extends State<SignupWithCredentials> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
                 },
                 child: const Text(
                   "Already have an account? Login",

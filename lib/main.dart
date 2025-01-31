@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:  const LoadingScreen(), // Start with the loading screen
+      home:  const SplashScreen(), // Start with the loading screen
     );
   }
 }

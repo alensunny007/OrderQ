@@ -49,14 +49,14 @@ List<Map<String, dynamic>> foodItems = [
     'title': 'Tea',
     'price': '10',
     'imageUrl': 'assets/images/tea.png',
-    'description': 'Traditional drink.',
+    'description': 'Traditional hot drink.',
   },
   {
     'id': '7',
     'title': 'Coffee',
     'price': '10',
     'imageUrl': 'assets/images/coffee.png',
-    'description': 'Native Energy drink.',
+    'description': 'Hot caffeine drink.',
   },
   {
     'id': '8',

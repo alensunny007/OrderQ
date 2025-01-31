@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:orderq/pages/Signupby.dart';
 import 'loginpage.dart';
-import 'signupwithcredentials.dart';
 
 class Signup extends StatelessWidget {
   const Signup({super.key});
@@ -54,7 +54,7 @@ class Signup extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SignupWithCredentials()),
+                      MaterialPageRoute(builder: (context) => const Signupas()),
                     );
                   },
                   child: const Text(

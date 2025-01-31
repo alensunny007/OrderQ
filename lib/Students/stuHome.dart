@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
-import 'cart.dart';
-import 'favourites.dart';
-import 'profile.dart';
-import 'contact_us.dart';
+import 'package:orderq/pages/cart.dart';
+import 'package:orderq/pages/contact_us.dart';
+import 'package:orderq/pages/favourites.dart';
+import 'package:orderq/pages/profile.dart';
 import 'package:orderq/utils/food_data.dart';
 import 'package:orderq/utils/favour_data.dart';
 import 'package:orderq/utils/cafeteria_data.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class StuHomePage extends StatefulWidget {
+  final dynamic userId;
+
+  const StuHomePage({Key? key, required this.userId}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<StuHomePage> createState() => _StuHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _StuHomePageState extends State<StuHomePage> {
   int _selectedIndex = 0;
   String selectedOption = 'Canteen';
   final PageController _pageController = PageController();
