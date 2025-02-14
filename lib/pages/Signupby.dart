@@ -22,41 +22,44 @@ class Signupas extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Stack(
-          children: [
-            // Top Corner Logo
-            Positioned(
-              top: 45,
-              right: 20,
-              child: Image.asset(
-                'assets/images/logo-orderq.png',
-                width: 100,
-              ),
-            ),
-
-            // Centered Content
-            SizedBox(
-              height: MediaQuery.of(context).size.height,
-              child: Center(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0, vertical: 40.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Student Button
+                    const SizedBox(height: 60),
+
+                    // Logo
+                    Image.asset(
+                      'assets/images/logo-orderq.png',
+                      width: 180,
+                      height: 180,
+                    ),
+
+                    const SizedBox(height: 80),
+
+                    // Common button style
                     Container(
-                      width: 300,
-                      height: 70,
+                      constraints: const BoxConstraints(
+                        maxWidth: 300,
+                        minWidth: 300,
+                      ),
+                      height: 65,
                       child: ElevatedButton(
-                        onPressed: () {
-                          _navigateToNextScreen(context);
-                        },
+                        onPressed: () => _navigateToNextScreen(context),
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF53E3C6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          backgroundColor: const Color(0xFF53E3C6), // Using theme teal color
                           elevation: 0,
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -79,26 +82,26 @@ class Signupas extends StatelessWidget {
 
                     const Gap(30),
 
-                    // Canteen/Cafeteria Button
                     Container(
-                      width: 300,
-                      height: 70,
+                      constraints: const BoxConstraints(
+                        maxWidth: 300,
+                        minWidth: 300,
+                      ),
+                      height: 65,
                       child: ElevatedButton(
-                        onPressed: () {
-                          _navigateToNextScreen2(context);
-                        },
+                        onPressed: () => _navigateToNextScreen2(context),
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF53E3C6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          backgroundColor: Colors.white.withOpacity(0.2), // Semi-transparent white
                           elevation: 0,
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.groups,
+                              Icons.restaurant,
                               color: Colors.white,
                               size: 30,
                             ),
@@ -118,17 +121,19 @@ class Signupas extends StatelessWidget {
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   void _navigateToNextScreen(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => SignupWithCredentials()));
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => SignupWithCredentials()));
   }
 
   void _navigateToNextScreen2(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => Cansignup()));
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => Cansignup()));
   }
 }

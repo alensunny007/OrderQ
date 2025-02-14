@@ -5,7 +5,7 @@ import 'package:orderq/services/auth_services.dart'; // Import the AuthService
 import 'package:fluttertoast/fluttertoast.dart'; // Import the HomePage
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
- 
+
 class Cansignup extends StatefulWidget {
   const Cansignup({super.key});
 
@@ -38,153 +38,165 @@ class _Cansignup extends State<Cansignup> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _fullNameController,
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment
+                  .stretch, // This will stretch children horizontally
+              children: [
+                const SizedBox(height: 60), // Add top spacing
+                TextField(
+                  controller: _fullNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
+                  keyboardType: TextInputType.name,
+                  style: const TextStyle(color: Colors.white),
                 ),
-                keyboardType: TextInputType.name,
-                style: const TextStyle(color: Colors.white),
-              ),
-              
-              const SizedBox(height: 16),
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _Phoneno,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  final email = _emailController.text.trim();
-                  final password = _passwordController.text.trim();
-                  final name = _fullNameController.text.trim();
-                  final mobileNumber = _Phoneno.text.trim();
 
-                  if (email.isEmpty || password.isEmpty || name.isEmpty || mobileNumber.isEmpty) {
-                    Fluttertoast.showToast(
-                      msg: 'Please fill in all fields.',
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: Colors.black54,
-                      textColor: Colors.white,
-                      fontSize: 14.0,
-                    );
-                    return;
-                  }
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _Phoneno,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    final email = _emailController.text.trim();
+                    final password = _passwordController.text.trim();
+                    final name = _fullNameController.text.trim();
+                    final mobileNumber = _Phoneno.text.trim();
 
-                  try {
-                    await _authService.signup(
-                      email: email,
-                      password: password,
-                      context: context,
-                    );
-
-                    // If signup is successful, add user details to Firestore
-                    User? user = FirebaseAuth.instance.currentUser;
-                    if (user != null) {
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(user.uid)
-                          .set({
-                        'name': name,
-                        'email': email,
-                        'mobileNumber': mobileNumber,
-                        'roll': 'Cafe',
-                      });
+                    if (email.isEmpty ||
+                        password.isEmpty ||
+                        name.isEmpty ||
+                        mobileNumber.isEmpty) {
+                      Fluttertoast.showToast(
+                        msg: 'Please fill in all fields.',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.black54,
+                        textColor: Colors.white,
+                        fontSize: 14.0,
+                      );
+                      return;
                     }
 
-                    // Navigate to HomePage
+                    try {
+                      await _authService.signup(
+                        email: email,
+                        password: password,
+                        context: context,
+                      );
+
+                      // If signup is successful, add user details to Firestore
+                      User? user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .set({
+                          'name': name,
+                          'email': email,
+                          'mobileNumber': mobileNumber,
+                          'roll': 'Cafe',
+                        });
+                      }
+
+                      // Navigate to HomePage
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
+                      );
+                    } catch (e) {
+                      Fluttertoast.showToast(
+                        msg: 'Signup failed: $e',
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                        fontSize: 14.0,
+                      );
+                    }
+                  },
+                  child: const Text('Sign Up'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF53E3C6),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 24),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
                     );
-                  } catch (e) {
-                    Fluttertoast.showToast(
-                      msg: 'Signup failed: $e',
-                      toastLength: Toast.LENGTH_LONG,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: Colors.redAccent,
-                      textColor: Colors.white,
-                      fontSize: 14.0,
-                    );
-                  }
-                },
-                child: const Text('Sign Up'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF53E3C6),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  },
+                  child: const Text(
+                    "Already have an account? Login",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
-                },
-                child: const Text(
-                  "Already have an account? Login",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

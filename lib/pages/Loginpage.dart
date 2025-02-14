@@ -141,12 +141,7 @@ class LoginPage extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   // Navigate to the Sign-Up page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Signupas(),
-                    ),
-                  );
+                  Navigator.pushReplacementNamed(context, '/signupPage');
                 },
                 child: const Text(
                   "Don't have an account? Sign Up",

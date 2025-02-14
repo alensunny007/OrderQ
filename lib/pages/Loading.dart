@@ -18,9 +18,9 @@ class _SplashScreen extends State<SplashScreen> {
 
     // Navigate to the SignUpPage after a delay
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
+      Navigator.pushReplacementNamed(
         context,
-        MaterialPageRoute(builder: (context) => const Signup()),
+        '/loginPage',
       );
     });
   }

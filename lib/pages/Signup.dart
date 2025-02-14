@@ -77,10 +77,7 @@ class Signup extends StatelessWidget {
                 height: 40, // Fixed button height
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
+                   Navigator.pushReplacementNamed(context, '/loginPage');
                   },
                   child: const Text(
                     'Login',
