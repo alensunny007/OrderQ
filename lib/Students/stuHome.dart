@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:orderq/pages/cart.dart';
-import 'package:orderq/pages/contact_us.dart';
-import 'package:orderq/pages/favourites.dart';
+import 'package:orderq/pages/studenthome/cart.dart';
+import 'package:orderq/pages/studenthome/contact_us.dart';
+import 'package:orderq/pages/studenthome/favourites.dart';
 import 'package:orderq/pages/profile.dart';
 import 'package:orderq/utils/food_data.dart';
 import 'package:orderq/utils/favour_data.dart';

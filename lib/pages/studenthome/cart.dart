@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:orderq/pages/checkout.dart';
+import 'package:orderq/pages/studenthome/checkout.dart';
 import 'package:orderq/utils/cart_data.dart';
 
 class CartPage extends StatelessWidget {
