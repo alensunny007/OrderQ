@@ -25,119 +25,193 @@ class _HomeWidgetState extends State<HomeWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date Selector
-            Card(
-              child: ListTile(
-                title: const Text('Select Date',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                trailing: TextButton(
-                  child: Text(
-                    selectedDate.toString().split(' ')[0],
-                    style: const TextStyle(color: Color(0xFF00122D)),
-                  ),
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 7)),
-                    );
-                    if (date != null) {
-                      setState(() => selectedDate = date);
-                      _loadSelectedItems();
-                    }
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Type Selector
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildTypeButton('canteen', 'Canteen'),
-                _buildTypeButton('cafeteria', 'Cafeteria'),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Food Items List
-            Expanded(
-              child: Card(
-                child: ListView.builder(
-                  itemCount: selectedType == 'canteen'
-                      ? foodItems.length
-                      : cafefoodItems.length,
-                  itemBuilder: (context, index) {
-                    final item = selectedType == 'canteen'
-                        ? foodItems[index]
-                        : cafefoodItems[index];
-                    return CheckboxListTile(
-                      title: Text(item['title']),
-                      subtitle: Text('₹${item['price']}'),
-                      secondary: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          item['imageUrl'],
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Date Selector
+              SafeArea(
+                child: Card(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ListTile(
+                          title: const Text('Select Date',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          trailing: TextButton(
+                            child: Text(
+                              selectedDate.toString().split(' ')[0],
+                              style: const TextStyle(color: Color(0xFF00122D)),
+                            ),
+                            onPressed: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: selectedDate,
+                                firstDate: DateTime.now(),
+                                lastDate:
+                                    DateTime.now().add(const Duration(days: 7)),
+                              );
+                              if (date != null) {
+                                setState(() => selectedDate = date);
+                                _loadSelectedItems();
+                              }
+                            },
+                          ),
                         ),
                       ),
-                      value: selectedFoodIds.contains(item['id']),
-                      onChanged: (bool? value) {
-                        setState(() {
-                          if (value == true) {
-                            selectedFoodIds.add(item['id']);
-                          } else {
-                            selectedFoodIds.remove(item['id']);
-                          }
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            // Save Button
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00122D),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            left: BorderSide(
+                              color: Colors.grey,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.logout,
+                            color: Color(0xFF00122D),
+                          ),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Logout'),
+                                  content: const Text(
+                                      'Are you sure you want to logout?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        Navigator.of(context)
+                                            .pushReplacementNamed('/loginPage');
+                                      },
+                                      child: const Text('Logout'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: _saveMenu,
-                  child: const Text('Save Daily Menu'),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Type Selector
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildTypeButton('canteen', 'Canteen'),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildTypeButton('cafeteria', 'Cafeteria'),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Food Items List
+              Expanded(
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          key: PageStorageKey<String>(selectedType),
+                          padding: const EdgeInsets.all(8),
+                          itemCount: selectedType == 'canteen'
+                              ? foodItems.length
+                              : cafefoodItems.length,
+                          itemBuilder: (context, index) {
+                            final item = selectedType == 'canteen'
+                                ? foodItems[index]
+                                : cafefoodItems[index];
+                            return CheckboxListTile(
+                              title: Text(item['title']),
+                              subtitle: Text('₹${item['price']}'),
+                              secondary: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  item['imageUrl'],
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              value: selectedFoodIds.contains(item['id']),
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedFoodIds.add(item['id']);
+                                  } else {
+                                    selectedFoodIds.remove(item['id']);
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Save Button
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00122D),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _saveMenu,
+                    child: const Text('Save Daily Menu'),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
