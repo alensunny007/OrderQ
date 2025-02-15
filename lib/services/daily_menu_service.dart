@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:orderq/utils/cafeteria_data.dart';
 import 'package:orderq/utils/food_data.dart';
-import '../models/daily_menu.dart';
+
 
 class DailyMenuService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

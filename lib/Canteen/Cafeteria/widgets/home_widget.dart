@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../services/daily_menu_service.dart';
 import '../../../utils/food_data.dart';
 import '../../../utils/cafeteria_data.dart';
@@ -258,64 +258,6 @@ class _HomeWidgetState extends State<HomeWidget> {
     }
   }
 
-  Widget _buildSelectedItemsList() {
-    final items = selectedType == 'canteen' ? foodItems : cafefoodItems;
-    final selectedItems =
-        items.where((item) => selectedFoodIds.contains(item['id'])).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            'Selected Items for Today:',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        if (selectedItems.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'No items selected for today',
-              style: TextStyle(color: Colors.white70),
-            ),
-          )
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: selectedItems.length,
-            itemBuilder: (context, index) {
-              final item = selectedItems[index];
-              return ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    item['imageUrl'],
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                title: Text(
-                  item['title'],
-                  style: const TextStyle(color: Colors.white),
-                ),
-                subtitle: Text(
-                  '₹${item['price']}',
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              );
-            },
-          ),
-      ],
-    );
-  }
 
   Future<void> _saveMenu() async {
     try {

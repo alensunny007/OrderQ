@@ -5,7 +5,7 @@ import 'package:orderq/pages/studenthome/favourites.dart';
 import 'package:orderq/pages/profile.dart';
 import 'package:orderq/utils/food_data.dart';
 import 'package:orderq/utils/favour_data.dart';
-import 'package:orderq/utils/cafeteria_data.dart';
+
 import '../services/daily_menu_service.dart';
 
 class StuHomePage extends StatefulWidget {

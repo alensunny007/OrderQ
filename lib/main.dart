@@ -1,9 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
 import 'package:orderq/Students/signupwithcredentials.dart';
-import 'package:orderq/pages/Loginpage.dart';
-import 'package:orderq/pages/Signup.dart';
+import 'package:orderq/pages/loginpage.dart';
+
 import 'package:orderq/pages/Signupby.dart';
+
 import 'pages/loading.dart';
 
 void main() async {
@@ -23,14 +25,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:  const SplashScreen(), 
+      home: const SplashScreen(),
       routes: {
         '/landingPage': (context) => const Signupas(),
-        '/loginPage':(context)=>const LoginPage(),
-        '/signupPage':(context)=>const SignupWithCredentials(),
-        
+        '/loginPage': (context) => const LoginPage(),
+        '/signupPage': (context) => const SignupWithCredentials(),
       },
-    
     );
   }
 }
