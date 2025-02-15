@@ -4,7 +4,8 @@ import 'package:orderq/pages/studenthome/contact_us.dart';
 import 'package:orderq/pages/studenthome/favourites.dart';
 import 'package:orderq/pages/profile.dart';
 import 'package:orderq/utils/food_data.dart';
-import 'package:orderq/utils/favour_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 import '../services/daily_menu_service.dart';
 
@@ -22,14 +23,23 @@ class _StuHomePageState extends State<StuHomePage> {
   String selectedOption = 'Canteen';
   final PageController _pageController = PageController();
   final List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
-  final List<bool> _isFavorite = List.generate(foodItems.length, (_) => false);
+  final Map<String, bool> _favoriteStates = {};
   final DailyMenuService _menuService = DailyMenuService();
   List<Map<String, dynamic>> availableItems = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot>? _favoritesSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadDailyMenu();
+    _setupFavoritesListener();
+  }
+
+  @override
+  void dispose() {
+    _favoritesSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadDailyMenu() async {
@@ -45,6 +55,58 @@ class _StuHomePageState extends State<StuHomePage> {
       setState(() {
         availableItems = [];
       });
+    }
+  }
+
+  void _setupFavoritesListener() {
+    _favoritesSubscription = _firestore
+        .collection('users')
+        .doc(widget.userId)
+        .collection('favorites')
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        _favoriteStates.clear();
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          _favoriteStates[data['itemId']] = true;
+        }
+      });
+    });
+  }
+
+  Future<void> toggleFavorite(Map<String, dynamic> item, int index) async {
+    try {
+      final String userId = widget.userId;
+      final String itemId =
+          '${selectedOption.toLowerCase()}_${item['id'] ?? DateTime.now().toString()}';
+
+      final docRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('favorites')
+          .doc(itemId);
+
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        await docRef.delete();
+      } else {
+        await docRef.set({
+          'title': item['title'],
+          'price': item['price'],
+          'imageUrl': item['imageUrl'],
+          'description': item['description'],
+          'dateAdded': DateTime.now(),
+          'itemId': itemId,
+          'source': selectedOption.toLowerCase(),
+        });
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error updating favorites')),
+      );
     }
   }
 
@@ -69,7 +131,7 @@ class _StuHomePageState extends State<StuHomePage> {
           _buildHomePage(),
           const ProfilePage(),
           CartPage(),
-          FavoritesPage(favoriteItems: favouriteItems),
+          Favourites(),
           const ContactUsPage(),
         ],
       ),
@@ -213,6 +275,9 @@ class _StuHomePageState extends State<StuHomePage> {
   }
 
   Widget _buildFoodCard(Map<String, dynamic> item, int index) {
+    final String itemId =
+        '${selectedOption.toLowerCase()}_${item['id'] ?? DateTime.now().toString()}';
+
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -300,15 +365,15 @@ class _StuHomePageState extends State<StuHomePage> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            _isFavorite[index]
+                            _favoriteStates[itemId] == true
                                 ? Icons.favorite
                                 : Icons.favorite_border,
-                            color:
-                                _isFavorite[index] ? Colors.red : Colors.grey,
+                            color: _favoriteStates[itemId] == true
+                                ? Colors.red
+                                : Colors.grey,
                             size: 20,
                           ),
-                          onPressed: () => setState(
-                              () => _isFavorite[index] = !_isFavorite[index]),
+                          onPressed: () => toggleFavorite(item, index),
                         ),
                         const SizedBox(width: 8),
                         IconButton(

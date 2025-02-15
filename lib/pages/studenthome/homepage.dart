@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:orderq/pages/studenthome/cart.dart';
 import 'package:orderq/pages/studenthome/favourites.dart';
+
 import '../profile.dart';
 import 'package:orderq/pages/studenthome/contact_us.dart';
 
 import 'package:orderq/utils/food_data.dart';
-import 'package:orderq/utils/favour_data.dart';
+
 import 'package:orderq/utils/cafeteria_data.dart';
 
 class HomePage extends StatefulWidget {
@@ -43,7 +44,7 @@ class _HomePageState extends State<HomePage> {
           _buildHomePage(),
           const ProfilePage(),
           CartPage(),
-          FavoritesPage(favoriteItems: favouriteItems),
+          Favourites(),
           const ContactUsPage(),
         ],
       ),
