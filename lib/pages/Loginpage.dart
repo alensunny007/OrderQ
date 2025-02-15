@@ -1,16 +1,15 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
-import 'package:fluttertoast/fluttertoast.dart'; // For displaying toast messages
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:orderq/Canteen/Cafeteria/cafHome.dart';
 import 'package:orderq/Students/stuHome.dart';
-import 'package:orderq/pages/Signupby.dart';
-import 'HomePage.dart'; // Import the HomePage for successful login navigation
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+
+import 'package:orderq/superadmin/super_home.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -86,14 +85,12 @@ class LoginPage extends StatelessWidget {
                   }
 
                   try {
-                    // Attempt to sign in
-                    UserCredential userCredential = await FirebaseAuth.instance
-                        .signInWithEmailAndPassword(
+                    // Add the sign-in implementation here
+                    await FirebaseAuth.instance.signInWithEmailAndPassword(
                       email: email,
                       password: password,
                     );
 
-                    // If successful, navigate to HomePage
                     Fluttertoast.showToast(
                       msg: "Login successful!",
                       toastLength: Toast.LENGTH_SHORT,
@@ -103,8 +100,7 @@ class LoginPage extends StatelessWidget {
                       fontSize: 14.0,
                     );
 
-                    route(context); // Call the route method after successful login
-
+                    route(context);
                   } on FirebaseAuthException catch (e) {
                     String errorMessage;
                     switch (e.code) {
@@ -134,7 +130,8 @@ class LoginPage extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53E3C6),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
               ),
               const SizedBox(height: 16),
@@ -157,36 +154,73 @@ class LoginPage extends StatelessWidget {
 
   void route(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
+
     FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
         .get()
         .then((DocumentSnapshot documentSnapshot) {
       if (documentSnapshot.exists) {
-        if (documentSnapshot.get('roll') == 'cafe') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Admin not approved yet, Please contact the admin'),
-            ),
-          );
-        } else if (documentSnapshot.get('roll') == 'student') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => StuHomePage(userId: documentSnapshot.id)),
+        
+        String userRole = documentSnapshot.get('roll') as String;
+
+        switch (userRole) {
+          case 'cafe':
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CafHomePage(userId: documentSnapshot.id),
+              ),
             );
-          
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CafHomePage(userId: documentSnapshot.id),
-            ),
-          );
+            break;
+
+          case 'student':
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StuHomePage(userId: documentSnapshot.id),
+              ),
+            );
+            break;
+
+          case 'super': // Added case for superadmin
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SuperHome(userId: documentSnapshot.id),
+              ),
+            );
+            break;
+
+          default:
+            // Handle unknown role
+            Fluttertoast.showToast(
+              msg: "Invalid user role",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.redAccent,
+              textColor: Colors.white,
+            );
         }
       } else {
-        print('Document does not exist on the database');
+        // Handle non-existent document
+        Fluttertoast.showToast(
+          msg: "User profile not found",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          textColor: Colors.white,
+        );
       }
+    }).catchError((error) {
+      // Handle any errors that occur during the process
+      Fluttertoast.showToast(
+        msg: "Error: ${error.toString()}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+      );
     });
   }
 }

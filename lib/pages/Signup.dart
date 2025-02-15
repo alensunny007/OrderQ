@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:orderq/pages/Signupby.dart';
-import 'loginpage.dart';
 
 class Signup extends StatelessWidget {
   const Signup({super.key});
@@ -8,7 +7,6 @@ class Signup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -77,7 +75,7 @@ class Signup extends StatelessWidget {
                 height: 40, // Fixed button height
                 child: OutlinedButton(
                   onPressed: () {
-                   Navigator.pushReplacementNamed(context, '/loginPage');
+                    Navigator.pushReplacementNamed(context, '/loginPage');
                   },
                   child: const Text(
                     'Login',

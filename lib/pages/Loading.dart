@@ -1,8 +1,5 @@
-// ignore_for_file: file_names
-
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'signup.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

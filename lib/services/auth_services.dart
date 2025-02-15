@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:orderq/pages/Homepage.dart';
+import 'package:orderq/pages/studenthome/homepage.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -13,10 +13,6 @@ class AuthService {
   }) async {
     try {
       // Attempt to create the user
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
 
       // If the signup is successful, show success message and navigate to HomePage
       Fluttertoast.showToast(
@@ -55,10 +51,6 @@ class AuthService {
   }) async {
     try {
       // Attempt to sign in the user
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
 
       // If the login is successful, show success message and navigate to HomePage
       Fluttertoast.showToast(
