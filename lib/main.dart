@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:orderq/Students/signupwithcredentials.dart';
 import 'package:orderq/pages/loginpage.dart';
 
-import 'package:orderq/pages/Signupby.dart';
-
 import 'pages/loading.dart';
 
 void main() async {
@@ -27,7 +25,6 @@ class MyApp extends StatelessWidget {
       ),
       home: const SplashScreen(),
       routes: {
-        '/landingPage': (context) => const Signupas(),
         '/loginPage': (context) => const LoginPage(),
         '/signupPage': (context) => const SignupWithCredentials(),
       },

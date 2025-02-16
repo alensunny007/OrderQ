@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:orderq/pages/studenthome/homepage.dart';
+
 import 'package:orderq/pages/loginpage.dart';
-import 'package:orderq/services/auth_services.dart'; // Import the AuthService
-import 'package:fluttertoast/fluttertoast.dart'; // Import the HomePage
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
-import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
+
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<UserCredential> signup({
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+}
 
 class Cansignup extends StatefulWidget {
   const Cansignup({super.key});
@@ -18,7 +33,7 @@ class _Cansignup extends State<Cansignup> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
-  final _Phoneno = TextEditingController();
+  final _phoneno = TextEditingController();
 
   final AuthService _authService = AuthService(); // Instantiate AuthService
 
@@ -54,7 +69,7 @@ class _Cansignup extends State<Cansignup> {
                     labelText: 'Full Name',
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.white.withAlpha(25),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
@@ -71,7 +86,7 @@ class _Cansignup extends State<Cansignup> {
                     labelText: 'Email',
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.white.withAlpha(25),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
@@ -87,7 +102,7 @@ class _Cansignup extends State<Cansignup> {
                     labelText: 'Password',
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.white.withAlpha(25),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
@@ -98,12 +113,12 @@ class _Cansignup extends State<Cansignup> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: _Phoneno,
+                  controller: _phoneno,
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Colors.white.withAlpha(25),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
@@ -118,7 +133,7 @@ class _Cansignup extends State<Cansignup> {
                     final email = _emailController.text.trim();
                     final password = _passwordController.text.trim();
                     final name = _fullNameController.text.trim();
-                    final mobileNumber = _Phoneno.text.trim();
+                    final mobileNumber = _phoneno.text.trim();
 
                     if (email.isEmpty ||
                         password.isEmpty ||
@@ -136,6 +151,7 @@ class _Cansignup extends State<Cansignup> {
                     }
 
                     try {
+                      final navigator = Navigator.of(context);
                       await _authService.signup(
                         email: email,
                         password: password,
@@ -156,12 +172,13 @@ class _Cansignup extends State<Cansignup> {
                         });
                       }
 
-                      // Navigate to HomePage
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginPage()),
-                      );
+                      // Navigate to HomePage only if widget is still mounted
+                      if (mounted) {
+                        navigator.pushReplacement(
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
+                        );
+                      }
                     } catch (e) {
                       Fluttertoast.showToast(
                         msg: 'Signup failed: $e',
@@ -173,13 +190,13 @@ class _Cansignup extends State<Cansignup> {
                       );
                     }
                   },
-                  child: const Text('Sign Up'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF53E3C6),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         vertical: 12, horizontal: 24),
                   ),
+                  child: const Text('Sign Up'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
