@@ -1,6 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+
 import 'package:orderq/Canteen/Cafeteria/widgets/home_widget.dart';
 import 'package:orderq/Canteen/Cafeteria/widgets/menu_widget.dart';
 import 'package:orderq/Canteen/Cafeteria/widgets/orders_widget.dart';
@@ -8,7 +7,7 @@ import 'package:orderq/Canteen/Cafeteria/widgets/orders_widget.dart';
 class CafHomePage extends StatefulWidget {
   final dynamic userId;
 
-  const CafHomePage({Key? key, required this.userId}) : super(key: key);
+  const CafHomePage({super.key, required this.userId});
 
   @override
   State<CafHomePage> createState() => _CafHomePageState();
@@ -36,9 +35,9 @@ class _CafHomePageState extends State<CafHomePage> {
           });
         },
         children: const [
-          HomeWidget(),
-          MenuWidget(),
-          OrdersWidget(),
+          HomeWidget(), // Home page first
+          MenuWidget(), // Menu page second
+          OrdersWidget(), // Orders page third
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -49,14 +48,12 @@ class _CafHomePageState extends State<CafHomePage> {
         unselectedItemColor: Colors.white,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book_rounded), label: 'Menu'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book_rounded), label: 'Menu'),
           BottomNavigationBarItem(
               icon: Icon(Icons.shopping_cart), label: 'Orders'),
         ],
       ),
     );
   }
-
-
- 
 }

@@ -6,6 +6,7 @@ import 'package:orderq/pages/profile.dart';
 import 'package:orderq/utils/food_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../services/daily_menu_service.dart';
 
@@ -110,6 +111,42 @@ class _StuHomePageState extends State<StuHomePage> {
     }
   }
 
+  Future<void> toggleCart(Map<String, dynamic> item, int index) async {
+    try {
+      final String userId = widget.userId;
+      final String itemId = '${selectedOption.toLowerCase()}_${item['id']}';
+
+      final docRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('cart')
+          .doc(itemId);
+
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        await docRef.delete();
+        setState(() => _isInCart[index] = false);
+      } else {
+        await docRef.set({
+          'id': itemId,
+          'title': item['title'],
+          'price':
+              double.parse(item['price'].toString()), // Ensure price is double
+          'imageUrl': item['imageUrl'],
+          'quantity': 1,
+          'source': selectedOption.toLowerCase(),
+        });
+        setState(() => _isInCart[index] = true);
+      }
+    } catch (e) {
+      print('Error toggling cart: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error updating cart')),
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -120,6 +157,56 @@ class _StuHomePageState extends State<StuHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF00122D),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              // Show confirmation dialog
+              bool confirm = await showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+                  ) ??
+                  false;
+
+              if (confirm) {
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  // Navigate to login page and remove all previous routes
+                  if (mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, '/loginPage', (route) => false);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error logging out. Please try again.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+          ),
+        ],
+      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -386,8 +473,7 @@ class _StuHomePageState extends State<StuHomePage> {
                             color: _isInCart[index] ? Colors.teal : Colors.grey,
                             size: 20,
                           ),
-                          onPressed: () => setState(
-                              () => _isInCart[index] = !_isInCart[index]),
+                          onPressed: () => toggleCart(item, index),
                         ),
                       ],
                     ),

@@ -64,7 +64,7 @@ class DailyMenuService {
       await batch.commit();
     } catch (e) {
       print('Error setting daily menu: $e');
-      throw e;
+      rethrow;
     }
   }
 

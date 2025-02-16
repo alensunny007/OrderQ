@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:orderq/Canteen/Cafeteria/cafHome.dart';
-import 'package:orderq/Students/stuHome.dart';
+import 'package:orderq/Canteen/Cafeteria/caf_home.dart';
+import 'package:orderq/Students/stuhome.dart';
 
 import 'package:orderq/superadmin/super_home.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({Key? key});
+  const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -85,12 +85,13 @@ class LoginPage extends StatelessWidget {
                   }
 
                   try {
-                    // Add the sign-in implementation here
+                    // Add the sign-in attempt
                     await FirebaseAuth.instance.signInWithEmailAndPassword(
                       email: email,
                       password: password,
                     );
 
+                    // If successful, navigate to HomePage
                     Fluttertoast.showToast(
                       msg: "Login successful!",
                       toastLength: Toast.LENGTH_SHORT,
@@ -100,7 +101,9 @@ class LoginPage extends StatelessWidget {
                       fontSize: 14.0,
                     );
 
-                    route(context);
+                    if (context.mounted) {
+                      route(context);
+                    }
                   } on FirebaseAuthException catch (e) {
                     String errorMessage;
                     switch (e.code) {
@@ -126,13 +129,13 @@ class LoginPage extends StatelessWidget {
                     );
                   }
                 },
-                child: const Text('Login'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF53E3C6),
                   foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
+                child: const Text('Login'),
               ),
               const SizedBox(height: 16),
               TextButton(
@@ -161,8 +164,8 @@ class LoginPage extends StatelessWidget {
         .get()
         .then((DocumentSnapshot documentSnapshot) {
       if (documentSnapshot.exists) {
-        
-        String userRole = documentSnapshot.get('roll') as String;
+        // Change 'roll' to 'role'
+        String userRole = documentSnapshot.get('role') as String;
 
         switch (userRole) {
           case 'cafe':
@@ -195,7 +198,7 @@ class LoginPage extends StatelessWidget {
           default:
             // Handle unknown role
             Fluttertoast.showToast(
-              msg: "Invalid user role",
+              msg: "Invalid user role: $userRole",
               toastLength: Toast.LENGTH_SHORT,
               gravity: ToastGravity.BOTTOM,
               backgroundColor: Colors.redAccent,

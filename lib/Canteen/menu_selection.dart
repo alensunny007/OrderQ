@@ -4,6 +4,8 @@ import 'package:orderq/utils/food_data.dart';
 import '../services/daily_menu_service.dart';
 
 class MenuSelectionPage extends StatefulWidget {
+  const MenuSelectionPage({super.key});
+
   @override
   _MenuSelectionPageState createState() => _MenuSelectionPageState();
 }
@@ -18,13 +20,13 @@ class _MenuSelectionPageState extends State<MenuSelectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Select Daily Menu'),
+        title: const Text('Select Daily Menu'),
       ),
       body: Column(
         children: [
           // Date picker
           ListTile(
-            title: Text('Select Date'),
+            title: const Text('Select Date'),
             trailing: TextButton(
               child: Text(selectedDate.toString().split(' ')[0]),
               onPressed: () async {
@@ -32,7 +34,7 @@ class _MenuSelectionPageState extends State<MenuSelectionPage> {
                   context: context,
                   initialDate: selectedDate,
                   firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(Duration(days: 7)),
+                  lastDate: DateTime.now().add(const Duration(days: 7)),
                 );
                 if (date != null) {
                   setState(() => selectedDate = date);
@@ -56,10 +58,12 @@ class _MenuSelectionPageState extends State<MenuSelectionPage> {
           // Food items list
           Expanded(
             child: ListView.builder(
-              itemCount: selectedType == 'canteen' ? foodItems.length : cafefoodItems.length,
+              itemCount: selectedType == 'canteen'
+                  ? foodItems.length
+                  : cafefoodItems.length,
               itemBuilder: (context, index) {
-                final item = selectedType == 'canteen' 
-                    ? foodItems[index] 
+                final item = selectedType == 'canteen'
+                    ? foodItems[index]
                     : cafefoodItems[index];
                 return CheckboxListTile(
                   title: Text(item['title']),
@@ -88,11 +92,11 @@ class _MenuSelectionPageState extends State<MenuSelectionPage> {
             date: selectedDate,
           );
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Menu updated successfully')),
+            const SnackBar(content: Text('Menu updated successfully')),
           );
         },
-        label: Text('Save Menu'),
-        icon: Icon(Icons.save),
+        label: const Text('Save Menu'),
+        icon: const Icon(Icons.save),
       ),
     );
   }

@@ -10,7 +10,7 @@ class OrdersWidget extends StatefulWidget {
 class _OrdersWidgetState extends State<OrdersWidget> {
   @override
   Widget build(BuildContext context) {
-     return Container(
+    return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: const BoxDecoration(
