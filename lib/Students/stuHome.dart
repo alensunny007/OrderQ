@@ -23,23 +23,30 @@ class _StuHomePageState extends State<StuHomePage> {
   int _selectedIndex = 0;
   String selectedOption = 'Canteen';
   final PageController _pageController = PageController();
-  final List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
+  List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
   final Map<String, bool> _favoriteStates = {};
   final DailyMenuService _menuService = DailyMenuService();
   List<Map<String, dynamic>> availableItems = [];
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<QuerySnapshot>? _favoritesSubscription;
+  StreamSubscription<QuerySnapshot>? _cartSubscription;
+  final Map<String, List<bool>> _cartStates = {
+    'canteen': [],
+    'cafeteria': [],
+  };
 
   @override
   void initState() {
     super.initState();
     _loadDailyMenu();
     _setupFavoritesListener();
+    _setupCartListener();
   }
 
   @override
   void dispose() {
     _favoritesSubscription?.cancel();
+    _cartSubscription?.cancel();
     super.dispose();
   }
 
@@ -72,6 +79,43 @@ class _StuHomePageState extends State<StuHomePage> {
           final data = doc.data();
           _favoriteStates[data['itemId']] = true;
         }
+      });
+    });
+  }
+
+  void _setupCartListener() {
+    _cartSubscription = _firestore
+        .collection('users')
+        .doc(widget.userId)
+        .collection('cart')
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        // Initialize cart states for both sources
+        _cartStates['canteen'] =
+            List.generate(availableItems.length, (_) => false);
+        _cartStates['cafeteria'] =
+            List.generate(availableItems.length, (_) => false);
+
+        // Update cart states based on Firestore data
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          final itemId = data['id'] as String;
+          final itemSource = data['source'] as String;
+
+          final index = availableItems.indexWhere((item) {
+            String currentItemId = '${itemSource}_${item['id']}';
+            return currentItemId == itemId;
+          });
+
+          if (index != -1) {
+            _cartStates[itemSource]?[index] = true;
+          }
+        }
+
+        // Update the current view's cart state
+        _isInCart = _cartStates[selectedOption.toLowerCase()] ??
+            List.generate(availableItems.length, (_) => false);
       });
     });
   }
@@ -114,7 +158,8 @@ class _StuHomePageState extends State<StuHomePage> {
   Future<void> toggleCart(Map<String, dynamic> item, int index) async {
     try {
       final String userId = widget.userId;
-      final String itemId = '${selectedOption.toLowerCase()}_${item['id']}';
+      final String source = selectedOption.toLowerCase();
+      final String itemId = '${source}_${item['id']}';
 
       final docRef = _firestore
           .collection('users')
@@ -126,18 +171,23 @@ class _StuHomePageState extends State<StuHomePage> {
 
       if (doc.exists) {
         await docRef.delete();
-        setState(() => _isInCart[index] = false);
+        setState(() {
+          _cartStates[source]?[index] = false;
+          _isInCart[index] = false;
+        });
       } else {
         await docRef.set({
           'id': itemId,
           'title': item['title'],
-          'price':
-              double.parse(item['price'].toString()), // Ensure price is double
+          'price': double.parse(item['price'].toString()),
           'imageUrl': item['imageUrl'],
           'quantity': 1,
-          'source': selectedOption.toLowerCase(),
+          'source': source,
         });
-        setState(() => _isInCart[index] = true);
+        setState(() {
+          _cartStates[source]?[index] = true;
+          _isInCart[index] = true;
+        });
       }
     } catch (e) {
       print('Error toggling cart: $e');
@@ -154,59 +204,19 @@ class _StuHomePageState extends State<StuHomePage> {
     _pageController.jumpToPage(index);
   }
 
+  void _updateSelectedOption(String option) {
+    setState(() {
+      selectedOption = option;
+      // Update the current cart state based on the selected option
+      _isInCart = _cartStates[option.toLowerCase()] ??
+          List.generate(availableItems.length, (_) => false);
+    });
+    _loadDailyMenu();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF00122D),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              // Show confirmation dialog
-              bool confirm = await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Logout'),
-                      content: const Text('Are you sure you want to logout?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Logout'),
-                        ),
-                      ],
-                    ),
-                  ) ??
-                  false;
-
-              if (confirm) {
-                try {
-                  await FirebaseAuth.instance.signOut();
-                  // Navigate to login page and remove all previous routes
-                  if (mounted) {
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, '/loginPage', (route) => false);
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Error logging out. Please try again.'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              }
-            },
-          ),
-        ],
-      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -217,8 +227,8 @@ class _StuHomePageState extends State<StuHomePage> {
         children: [
           _buildHomePage(),
           const ProfilePage(),
-          CartPage(),
-          Favourites(),
+          const CartPage(),
+          const Favourites(),
           const ContactUsPage(),
         ],
       ),
@@ -257,14 +267,68 @@ class _StuHomePageState extends State<StuHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SafeArea(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Hello, User",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold)),
+            SafeArea(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("Hello, User",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Logout'),
+                            content:
+                                const Text('Are you sure you want to logout?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  try {
+                                    await FirebaseAuth.instance.signOut();
+                                    if (context.mounted) {
+                                      Navigator.of(context)
+                                          .pop(); // Close dialog
+                                      Navigator.pushReplacementNamed(
+                                          context, '/loginPage');
+                                    }
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Error logging out. Please try again.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: const Text('Logout',
+                                    style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.logout,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    tooltip: 'Logout',
+                  ),
+                ],
               ),
             ),
             _buildSearchBar(),
@@ -306,12 +370,7 @@ class _StuHomePageState extends State<StuHomePage> {
   Widget _buildOptionButton(String option) {
     bool isSelected = selectedOption == option;
     return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          selectedOption = option;
-        });
-        _loadDailyMenu(); // Reload menu when option changes
-      },
+      onPressed: () => _updateSelectedOption(option),
       style: ElevatedButton.styleFrom(
         backgroundColor: isSelected ? Colors.amber : Colors.white,
         foregroundColor: isSelected ? Colors.black : Colors.grey[800],

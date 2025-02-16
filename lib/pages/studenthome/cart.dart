@@ -163,12 +163,17 @@ class CartPage extends StatelessWidget {
   }
 
   Future<void> _removeFromCart(String userId, String itemId) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('cart')
-        .doc(itemId)
-        .delete();
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('cart')
+          .doc(itemId)
+          .delete();
+    } catch (e) {
+      print('Error removing item from cart: $e');
+      // You might want to show an error message here
+    }
   }
 
   void _checkout(BuildContext context, double total, String userId,
