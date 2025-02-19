@@ -1,6 +1,6 @@
 # orderq
 
-A new Flutter project.
+A canteen management flutter app which users can view food items and order it seamlessly.
 
 ## Getting Started
 
