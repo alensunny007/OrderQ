@@ -168,7 +168,7 @@ class LoginPage extends StatelessWidget {
         String userRole = documentSnapshot.get('role') as String;
 
         switch (userRole) {
-          case 'cafe':
+          case 'admin':
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
