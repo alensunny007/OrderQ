@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:orderq/Canteen/Cafeteria/caf_home.dart';
 import 'package:orderq/Students/stuhome.dart';
@@ -86,7 +86,7 @@ class LoginPage extends StatelessWidget {
 
                   try {
                     // Add the sign-in attempt
-                    await FirebaseAuth.instance.signInWithEmailAndPassword(
+                    await auth.FirebaseAuth.instance.signInWithEmailAndPassword(
                       email: email,
                       password: password,
                     );
@@ -104,7 +104,7 @@ class LoginPage extends StatelessWidget {
                     if (context.mounted) {
                       route(context);
                     }
-                  } on FirebaseAuthException catch (e) {
+                  } on auth.FirebaseAuthException catch (e) {
                     String errorMessage;
                     switch (e.code) {
                       case 'user-not-found':
@@ -156,7 +156,7 @@ class LoginPage extends StatelessWidget {
   }
 
   void route(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
+    auth.User? user = auth.FirebaseAuth.instance.currentUser;
 
     FirebaseFirestore.instance
         .collection('users')
