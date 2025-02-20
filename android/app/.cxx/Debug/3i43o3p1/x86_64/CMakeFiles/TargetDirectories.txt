@@ -1,0 +1,2 @@
+C:/Users/amalh/OneDrive/Desktop/College Project/OrderQ/android/app/.cxx/Debug/3i43o3p1/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/amalh/OneDrive/Desktop/College Project/OrderQ/android/app/.cxx/Debug/3i43o3p1/x86_64/CMakeFiles/rebuild_cache.dir
