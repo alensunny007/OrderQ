@@ -3,19 +3,23 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:orderq/Canteen/Cafeteria/caf_home.dart';
 import 'package:orderq/Students/stuhome.dart';
-
 import 'package:orderq/superadmin/super_home.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
+  State<LoginPage> createState() => _LoginPageState();
+}
 
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -62,8 +66,19 @@ class LoginPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
                   ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.white70,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
+                obscureText: !_isPasswordVisible,
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 20),
@@ -164,7 +179,6 @@ class LoginPage extends StatelessWidget {
         .get()
         .then((DocumentSnapshot documentSnapshot) {
       if (documentSnapshot.exists) {
-        // Change 'roll' to 'role'
         String userRole = documentSnapshot.get('role') as String;
 
         switch (userRole) {
@@ -186,7 +200,7 @@ class LoginPage extends StatelessWidget {
             );
             break;
 
-          case 'super': // Added case for superadmin
+          case 'super':
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -196,7 +210,6 @@ class LoginPage extends StatelessWidget {
             break;
 
           default:
-            // Handle unknown role
             Fluttertoast.showToast(
               msg: "Invalid user role: $userRole",
               toastLength: Toast.LENGTH_SHORT,
@@ -206,7 +219,6 @@ class LoginPage extends StatelessWidget {
             );
         }
       } else {
-        // Handle non-existent document
         Fluttertoast.showToast(
           msg: "User profile not found",
           toastLength: Toast.LENGTH_SHORT,
@@ -216,7 +228,6 @@ class LoginPage extends StatelessWidget {
         );
       }
     }).catchError((error) {
-      // Handle any errors that occur during the process
       Fluttertoast.showToast(
         msg: "Error: ${error.toString()}",
         toastLength: Toast.LENGTH_SHORT,
