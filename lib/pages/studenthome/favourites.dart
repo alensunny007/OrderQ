@@ -34,6 +34,7 @@ class _FavouritesState extends State<Favourites>
         title: const Text('My Favorites'),
         backgroundColor: const Color(0xFF00122D),
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -45,12 +46,24 @@ class _FavouritesState extends State<Favourites>
           unselectedLabelColor: Colors.white,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildFavoritesList('canteen'),
-          _buildFavoritesList('cafeteria'),
-        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF00122D), // Dark blue
+              Color(0xFF001f47), // Slightly lighter blue
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildFavoritesList('canteen'),
+            _buildFavoritesList('cafeteria'),
+          ],
+        ),
       ),
     );
   }
@@ -65,16 +78,42 @@ class _FavouritesState extends State<Favourites>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.white70),
+                SizedBox(height: 16),
+                Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF53E3C6)),
+            ),
+          );
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
-            child: Text('No favorites in ${source.capitalize()}'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.favorite_border, size: 64, color: Colors.white70),
+                SizedBox(height: 16),
+                Text(
+                  'No favorites in ${source.capitalize()}',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
           );
         }
 
@@ -103,7 +142,9 @@ class _FavouritesState extends State<Favourites>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+      color: Color(0xFF001736),
       elevation: 6,
+      shadowColor: Colors.black.withOpacity(0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -119,43 +160,69 @@ class _FavouritesState extends State<Favourites>
                   fit: BoxFit.cover,
                 ),
               ),
-              
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black45,
+                  radius: 16,
+                  child: IconButton(
+                    icon: Icon(Icons.favorite, color: Colors.red, size: 16),
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
+                    onPressed: () => _removeFromFavorites(docId),
+                    tooltip: 'Remove from favorites',
+                  ),
+                ),
+              ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                  Expanded(
-                    child: Text(
-                    data['title'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    ),
+                Text(
+                  data['title'],
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.favorite, color: Colors.red),
-                    onPressed: () => _removeFromFavorites(docId),
-                  ),
-                  ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
                   '₹${data['price']}',
                   style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.teal,
+                    fontSize: 15,
+                    color: Color(0xFF53E3C6),
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  icon: Icon(Icons.add_shopping_cart, size: 16),
+                  label: Text('Add to Cart'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Color(0xFF53E3C6),
+                    side: BorderSide(color: Color(0xFF53E3C6)),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                    minimumSize: Size(double.infinity, 30),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  onPressed: () {
+                    // Add to cart functionality
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Added to cart'),
+                        backgroundColor: Color(0xFF00122D),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -180,6 +247,7 @@ class _FavouritesState extends State<Favourites>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Removed from favorites'),
+          backgroundColor: Color(0xFF00122D),
           duration: Duration(seconds: 2),
         ),
       );
@@ -187,6 +255,7 @@ class _FavouritesState extends State<Favourites>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error removing from favorites'),
+          backgroundColor: Colors.redAccent,
           duration: Duration(seconds: 2),
         ),
       );

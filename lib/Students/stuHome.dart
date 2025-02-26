@@ -23,7 +23,7 @@ class _StuHomePageState extends State<StuHomePage> {
   int _selectedIndex = 0;
   String selectedOption = 'Canteen';
   final PageController _pageController = PageController();
-  List<bool> _isInCart = List.generate(foodItems.length, (_) => false);
+  List<bool> _isInCart = [];  // Initialize as empty list
   final Map<String, bool> _favoriteStates = {};
   final DailyMenuService _menuService = DailyMenuService();
   List<Map<String, dynamic>> availableItems = [];
@@ -57,11 +57,14 @@ class _StuHomePageState extends State<StuHomePage> {
 
       setState(() {
         availableItems = menuItems;
+        // Update _isInCart length to match availableItems
+        _isInCart = List.generate(availableItems.length, (_) => false);
       });
     } catch (e) {
       print('Error loading daily menu: $e');
       setState(() {
         availableItems = [];
+        _isInCart = []; // Clear the list when there are no items
       });
     }
   }
@@ -91,11 +94,9 @@ class _StuHomePageState extends State<StuHomePage> {
         .snapshots()
         .listen((snapshot) {
       setState(() {
-        // Initialize cart states for both sources
-        _cartStates['canteen'] =
-            List.generate(availableItems.length, (_) => false);
-        _cartStates['cafeteria'] =
-            List.generate(availableItems.length, (_) => false);
+        // Make sure _cartStates lists match the current availableItems length
+        _cartStates['canteen'] = List.generate(availableItems.length, (_) => false);
+        _cartStates['cafeteria'] = List.generate(availableItems.length, (_) => false);
 
         // Update cart states based on Firestore data
         for (var doc in snapshot.docs) {
@@ -108,14 +109,38 @@ class _StuHomePageState extends State<StuHomePage> {
             return currentItemId == itemId;
           });
 
-          if (index != -1) {
-            _cartStates[itemSource]?[index] = true;
+          if (index != -1 && index < availableItems.length) {
+            // Add bounds checking to prevent out of range errors
+            if (_cartStates.containsKey(itemSource) && 
+                _cartStates[itemSource] != null && 
+                index < _cartStates[itemSource]!.length) {
+              _cartStates[itemSource]![index] = true;
+            }
           }
         }
 
-        // Update the current view's cart state
-        _isInCart = _cartStates[selectedOption.toLowerCase()] ??
-            List.generate(availableItems.length, (_) => false);
+        // Update the current view's cart state with bounds checking
+        String source = selectedOption.toLowerCase();
+        if (_cartStates.containsKey(source) && _cartStates[source] != null) {
+          // Only update if lengths match to prevent range errors
+          if (_cartStates[source]!.length == availableItems.length) {
+            _isInCart = List.from(_cartStates[source]!);
+          } else {
+            // Recreate _isInCart with the correct length
+            _isInCart = List.generate(availableItems.length, (_) => false);
+            
+            // Copy values where possible
+            int minLength = _isInCart.length < _cartStates[source]!.length 
+                ? _isInCart.length 
+                : _cartStates[source]!.length;
+                
+            for (int i = 0; i < minLength; i++) {
+              _isInCart[i] = _cartStates[source]![i];
+            }
+          }
+        } else {
+          _isInCart = List.generate(availableItems.length, (_) => false);
+        }
       });
     });
   }
@@ -156,6 +181,12 @@ class _StuHomePageState extends State<StuHomePage> {
   }
 
   Future<void> toggleCart(Map<String, dynamic> item, int index) async {
+    // Check bounds before proceeding
+    if (index >= availableItems.length || index >= _isInCart.length) {
+      print('Error: Index out of bounds in toggleCart');
+      return;
+    }
+    
     try {
       final String userId = widget.userId;
       final String source = selectedOption.toLowerCase();
@@ -172,8 +203,16 @@ class _StuHomePageState extends State<StuHomePage> {
       if (doc.exists) {
         await docRef.delete();
         setState(() {
-          _cartStates[source]?[index] = false;
-          _isInCart[index] = false;
+          // Safely update the cart states with bounds checking
+          if (_cartStates.containsKey(source) && 
+              _cartStates[source] != null && 
+              index < _cartStates[source]!.length) {
+            _cartStates[source]![index] = false;
+          }
+          
+          if (index < _isInCart.length) {
+            _isInCart[index] = false;
+          }
         });
       } else {
         await docRef.set({
@@ -185,8 +224,16 @@ class _StuHomePageState extends State<StuHomePage> {
           'source': source,
         });
         setState(() {
-          _cartStates[source]?[index] = true;
-          _isInCart[index] = true;
+          // Safely update the cart states with bounds checking
+          if (_cartStates.containsKey(source) && 
+              _cartStates[source] != null && 
+              index < _cartStates[source]!.length) {
+            _cartStates[source]![index] = true;
+          }
+          
+          if (index < _isInCart.length) {
+            _isInCart[index] = true;
+          }
         });
       }
     } catch (e) {
@@ -207,11 +254,8 @@ class _StuHomePageState extends State<StuHomePage> {
   void _updateSelectedOption(String option) {
     setState(() {
       selectedOption = option;
-      // Update the current cart state based on the selected option
-      _isInCart = _cartStates[option.toLowerCase()] ??
-          List.generate(availableItems.length, (_) => false);
     });
-    _loadDailyMenu();
+    _loadDailyMenu(); // This will update availableItems and _isInCart
   }
 
   @override
@@ -232,12 +276,13 @@ class _StuHomePageState extends State<StuHomePage> {
           const ContactUsPage(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
+     bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         backgroundColor: const Color(0xFF00122D),
         selectedItemColor: const Color(0xFF53E3C6),
-        unselectedItemColor: Colors.black,
+        unselectedItemColor: Colors.white,
+        type: BottomNavigationBarType.fixed, // Required for more than 3 items
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
@@ -285,43 +330,48 @@ class _StuHomePageState extends State<StuHomePage> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: const Text('Logout'),
-                            content:
-                                const Text('Are you sure you want to logout?'),
+                            backgroundColor: Color(0xFF00122D),
+                            title: Text('Logout', 
+                              style: TextStyle(color: Colors.white)
+                            ),
+                            content: Text(
+                              'Are you sure you want to logout?',
+                              style: TextStyle(color: Colors.white70)
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('Cancel'),
+                                child: Text('Cancel', 
+                                  style: TextStyle(color: Colors.white70)
+                                ),
                               ),
                               TextButton(
                                 onPressed: () async {
                                   try {
                                     await FirebaseAuth.instance.signOut();
                                     if (context.mounted) {
-                                      Navigator.of(context)
-                                          .pop(); // Close dialog
-                                      Navigator.pushReplacementNamed(
-                                          context, '/loginPage');
+                                      Navigator.of(context).pop(); // Close dialog
+                                      Navigator.pushReplacementNamed(context, '/loginPage');
                                     }
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Error logging out. Please try again.'),
-                                        backgroundColor: Colors.red,
+                                      SnackBar(
+                                        content: Text('Error logging out. Please try again.'),
+                                        backgroundColor: Colors.redAccent,
                                       ),
                                     );
                                   }
                                 },
-                                child: const Text('Logout',
-                                    style: TextStyle(color: Colors.red)),
+                                child: Text('Logout',
+                                  style: TextStyle(color: Colors.redAccent)
+                                ),
                               ),
                             ],
                           );
                         },
                       );
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.logout,
                       color: Colors.white,
                       size: 24,
@@ -421,6 +471,9 @@ class _StuHomePageState extends State<StuHomePage> {
   }
 
   Widget _buildFoodCard(Map<String, dynamic> item, int index) {
+    // Check bounds to prevent range error
+    bool isInCart = index < _isInCart.length ? _isInCart[index] : false;
+    
     final String itemId =
         '${selectedOption.toLowerCase()}_${item['id'] ?? DateTime.now().toString()}';
 
@@ -526,10 +579,10 @@ class _StuHomePageState extends State<StuHomePage> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            _isInCart[index]
+                            isInCart
                                 ? Icons.shopping_cart
                                 : Icons.add_shopping_cart,
-                            color: _isInCart[index] ? Colors.teal : Colors.grey,
+                            color: isInCart ? Colors.teal : Colors.grey,
                             size: 20,
                           ),
                           onPressed: () => toggleCart(item, index),

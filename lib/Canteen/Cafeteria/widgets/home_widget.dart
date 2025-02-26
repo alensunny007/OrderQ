@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeWidget extends StatelessWidget {
   const HomeWidget({super.key});
@@ -7,37 +8,63 @@ class HomeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(child:  Text('Home', style: TextStyle(color: Colors.white))),
+        title: const Center(child: Text('Home', style: TextStyle(color: Colors.white))),
         backgroundColor: const Color(0xFF00122D),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
+                    backgroundColor: Color(0xFF00122D),
+                    title: Text('Logout', 
+                      style: TextStyle(color: Colors.white)
+                    ),
+                    content: Text(
+                      'Are you sure you want to logout?',
+                      style: TextStyle(color: Colors.white70)
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+                        child: Text('Cancel', 
+                          style: TextStyle(color: Colors.white70)
+                        ),
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context)
-                              .pushReplacementNamed('/loginPage');
+                        onPressed: () async {
+                          try {
+                            await FirebaseAuth.instance.signOut();
+                            if (context.mounted) {
+                              Navigator.of(context).pop(); // Close dialog
+                              Navigator.pushReplacementNamed(context, '/loginPage');
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error logging out. Please try again.'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
                         },
-                        child: const Text('Logout'),
+                        child: Text('Logout',
+                          style: TextStyle(color: Colors.redAccent)
+                        ),
                       ),
                     ],
                   );
                 },
               );
             },
+            icon: Icon(
+              Icons.logout,
+              color: Colors.white,
+              size: 24,
+            ),
+            tooltip: 'Logout',
           ),
         ],
       ),
