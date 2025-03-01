@@ -26,6 +26,12 @@ class _FavouritesState extends State<Favourites>
     _tabController.dispose();
     super.dispose();
   }
+  
+  // Helper function for string capitalization
+  String capitalizeFirstLetter(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +115,7 @@ class _FavouritesState extends State<Favourites>
                 Icon(Icons.favorite_border, size: 64, color: Colors.white70),
                 SizedBox(height: 16),
                 Text(
-                  'No favorites in ${source.capitalize()}',
+                  'No favorites in ${capitalizeFirstLetter(source)}',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ],
@@ -121,9 +127,9 @@ class _FavouritesState extends State<Favourites>
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.75,
+            crossAxisSpacing: 15,
+            mainAxisSpacing: 15,
+            childAspectRatio: 0.8, // Match the home page aspect ratio
           ),
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
@@ -138,91 +144,162 @@ class _FavouritesState extends State<Favourites>
   }
 
   Widget _buildFavoriteCard(Map<String, dynamic> data, String docId) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+    // Safely get source and capitalize it
+    String sourceText = data['source'] ?? '';
+    String displaySource = capitalizeFirstLetter(sourceText);
+    
+    // Format price for display
+    var priceDisplay = '';
+    if (data['price'] != null) {
+      priceDisplay = '₹${data['price']}';
+    } else {
+      priceDisplay = '₹0';
+    }
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      color: Color(0xFF001736),
-      elevation: 6,
-      shadowColor: Colors.black.withOpacity(0.3),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Food Image
           Stack(
             children: [
               ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.asset(
-                  data['imageUrl'],
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: Container(
+                  height: 100,
                   width: double.infinity,
-                  height: 120,
-                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                  ),
+                  child: Image.asset(
+                    data['imageUrl'],
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
               Positioned(
                 top: 8,
                 right: 8,
-                child: CircleAvatar(
-                  backgroundColor: Colors.black45,
-                  radius: 16,
-                  child: IconButton(
-                    icon: Icon(Icons.favorite, color: Colors.red, size: 16),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                    onPressed: () => _removeFromFavorites(docId),
-                    tooltip: 'Remove from favorites',
+                child: GestureDetector(
+                  onTap: () => _removeFromFavorites(docId),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.favorite,
+                      color: Colors.red,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
+          
+          // Content
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  data['title'],
+                  data['title'] ?? '',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Color(0xFF00122D),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
                 Text(
-                  '₹${data['price']}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF53E3C6),
-                    fontWeight: FontWeight.bold,
+                  displaySource,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
                   ),
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  icon: Icon(Icons.add_shopping_cart, size: 16),
-                  label: Text('Add to Cart'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF53E3C6),
-                    side: BorderSide(color: Color(0xFF53E3C6)),
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                    minimumSize: Size(double.infinity, 30),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onPressed: () {
-                    // Add to cart functionality
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Added to cart'),
-                        backgroundColor: Color(0xFF00122D),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      priceDisplay,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF900C3F),
                       ),
-                    );
-                  },
+                    ),
+                    GestureDetector(
+                      onTap: () => _addToCart(data),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.add_shopping_cart,
+                          color: Colors.grey.shade700,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(data['title'] ?? ''),
+                            content: Text(data['description'] ?? 'No description available'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.info_outline,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -230,6 +307,93 @@ class _FavouritesState extends State<Favourites>
         ],
       ),
     );
+  }
+
+  Future<void> _addToCart(Map<String, dynamic> item) async {
+    try {
+      final String source = item['source'] ?? '';
+      final String itemId = item['itemId'] ?? '';
+
+      // Check if item has valid ID
+      if (itemId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Invalid item'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      final docRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('cart')
+          .doc(itemId);
+
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        // If item is already in cart, show message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item['title']} is already in your cart'),
+            backgroundColor: Color(0xFF00122D),
+          ),
+        );
+      } else {
+        // Handle different price formats and ensure it's saved as a double
+        dynamic priceValue = item['price'];
+        double finalPrice = 0.0;
+        
+        if (priceValue is double) {
+          finalPrice = priceValue;
+        } else if (priceValue is int) {
+          finalPrice = priceValue.toDouble();
+        } else if (priceValue is String) {
+          // Try to parse the string to a double
+          finalPrice = double.tryParse(priceValue) ?? 0.0;
+        }
+        
+        // Add item to cart with proper price value
+        await docRef.set({
+          'id': itemId,
+          'title': item['title'] ?? '',
+          'price': finalPrice,
+          'imageUrl': item['imageUrl'] ?? '',
+          'quantity': 1,
+          'source': source,
+        });
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item['title']} added to cart'),
+            backgroundColor: Color(0xFF53E3C6),
+            action: SnackBarAction(
+              label: 'VIEW CART',
+              textColor: Colors.white,
+              onPressed: () {
+                // Navigate to cart tab in the main navigation
+                Navigator.of(context).pop(); // Close the favorites page if it's a separate page
+                // Navigate to cart tab - this approach might need to be adjusted based on your navigation setup
+                final pageViewIndex = 2; // Index for cart in bottom navigation
+                // You may need to use a global key or state management solution to change the index
+                // This is a placeholder that would need to be implemented based on your navigation structure
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error adding to cart: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error adding to cart'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   Future<void> _removeFromFavorites(String docId) async {
@@ -260,12 +424,5 @@ class _FavouritesState extends State<Favourites>
         ),
       );
     }
-  }
-}
-
-// Add this extension for string capitalization
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
