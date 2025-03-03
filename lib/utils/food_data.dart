@@ -12,7 +12,7 @@ List<Map<String, dynamic>> foodItems = [
   {
     'id': '1',
     'title': 'Biriyani',
-    'price': '60',
+    'price': '65',
     'imageUrl': 'assets/images/biriyani.jpg',
     'description': 'A rice dish with meat.',
   },
