@@ -105,7 +105,7 @@ class User {
 
 class SuperHome extends StatefulWidget {
   final String userId;
-  const SuperHome({Key? key, required this.userId}) : super(key: key);
+  const SuperHome({super.key, required this.userId});
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
@@ -139,7 +139,7 @@ class _AdminDashboardState extends State<SuperHome> {
     end: Alignment.bottomRight,
   );
 
-  final Color tealColor = Color(0xFF53E3C6);
+  final Color tealColor = const Color(0xFF53E3C6);
 
   // Get stream of users from Firestore
   Stream<List<User>> getUsersStream() {
@@ -167,7 +167,7 @@ class _AdminDashboardState extends State<SuperHome> {
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
-              offset: Offset(0, -2),
+              offset: const Offset(0, -2),
             ),
           ],
         ),
@@ -183,7 +183,7 @@ class _AdminDashboardState extends State<SuperHome> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Color(0xFF53E3C6),
+          selectedItemColor: const Color(0xFF53E3C6),
           unselectedItemColor: Colors.white,
           backgroundColor:  const Color(0xFF00122D),
           elevation: 0,
@@ -205,7 +205,7 @@ class _AdminDashboardState extends State<SuperHome> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Text(
+                  const Text(
                     'Admin Dashboard',
                     style: TextStyle(
                       color: Colors.white,
@@ -213,9 +213,9 @@ class _AdminDashboardState extends State<SuperHome> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   IconButton(
-                    icon: Icon(Icons.refresh, color: Colors.white),
+                    icon: const Icon(Icons.refresh, color: Colors.white),
                     onPressed: () {
                       setState(() {});
                     },
@@ -227,18 +227,18 @@ class _AdminDashboardState extends State<SuperHome> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            backgroundColor: Color(0xFF00122D),
-                            title: Text('Logout', 
+                            backgroundColor: const Color(0xFF00122D),
+                            title: const Text('Logout', 
                               style: TextStyle(color: Colors.white)
                             ),
-                            content: Text(
+                            content: const Text(
                               'Are you sure you want to logout?',
                               style: TextStyle(color: Colors.white70)
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
-                                child: Text('Cancel', 
+                                child: const Text('Cancel', 
                                   style: TextStyle(color: Colors.white70)
                                 ),
                               ),
@@ -252,14 +252,14 @@ class _AdminDashboardState extends State<SuperHome> {
                                     }
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content: Text('Error logging out. Please try again.'),
                                         backgroundColor: Colors.redAccent,
                                       ),
                                     );
                                   }
                                 },
-                                child: Text('Logout',
+                                child: const Text('Logout',
                                   style: TextStyle(color: Colors.redAccent)
                                 ),
                               ),
@@ -268,7 +268,7 @@ class _AdminDashboardState extends State<SuperHome> {
                         },
                       );
                     },
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.logout,
                       color: Colors.white,
                       size: 24,
@@ -291,11 +291,11 @@ class _AdminDashboardState extends State<SuperHome> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: TextField(
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: 'Search by name, email, or student ID...',
-                          hintStyle: TextStyle(color: Colors.white70),
-                          prefixIcon: Icon(Icons.search, color: Colors.white70),
+                          hintStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white70),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
@@ -315,14 +315,14 @@ class _AdminDashboardState extends State<SuperHome> {
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: DropdownButton<String>(
                       value: roleFilter,
-                      dropdownColor: Color(0xFF00122D),
-                      style: TextStyle(color: Colors.white),
-                      icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-                      underline: SizedBox(),
-                      items: [
+                      dropdownColor: const Color(0xFF00122D),
+                      style: const TextStyle(color: Colors.white),
+                      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                      underline: const SizedBox(),
+                      items: const [
                         DropdownMenuItem(value: 'all', child: Text('All Roles')),
                         DropdownMenuItem(value: 'student', child: Text('Students')),
                         DropdownMenuItem(value: 'admin', child: Text('Admins')),
@@ -358,16 +358,16 @@ class _AdminDashboardState extends State<SuperHome> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.error_outline, color: Colors.white, size: 48),
-                          SizedBox(height: 16),
-                          Text(
+                          const Icon(Icons.error_outline, color: Colors.white, size: 48),
+                          const SizedBox(height: 16),
+                          const Text(
                             'Error loading users',
                             style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             snapshot.error.toString(),
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                            style: const TextStyle(color: Colors.white70, fontSize: 14),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -395,9 +395,9 @@ class _AdminDashboardState extends State<SuperHome> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.search_off, color: Colors.white70, size: 48),
-                          SizedBox(height: 16),
-                          Text(
+                          const Icon(Icons.search_off, color: Colors.white70, size: 48),
+                          const SizedBox(height: 16),
+                          const Text(
                             'No users found',
                             style: TextStyle(
                               color: Colors.white,
@@ -405,8 +405,8 @@ class _AdminDashboardState extends State<SuperHome> {
                             ),
                           ),
                           if (roleFilter != 'all' || searchQuery.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: Text(
                                 'Try adjusting your search or filter',
                                 style: TextStyle(
@@ -422,11 +422,11 @@ class _AdminDashboardState extends State<SuperHome> {
 
                   return ListView.builder(
                     itemCount: filteredUsers.length,
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     itemBuilder: (context, index) {
                       final user = filteredUsers[index];
                       return Container(
-                        margin: EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                           gradient: cardGradient,
                           borderRadius: BorderRadius.circular(12),
@@ -434,17 +434,17 @@ class _AdminDashboardState extends State<SuperHome> {
                             BoxShadow(
                               color: Colors.black.withOpacity(0.2),
                               blurRadius: 8,
-                              offset: Offset(0, 4),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: ListTile(
-                          contentPadding: EdgeInsets.all(16),
+                          contentPadding: const EdgeInsets.all(16),
                           leading: CircleAvatar(
-                            backgroundColor: Color(0xFF53E3C6),
+                            backgroundColor: const Color(0xFF53E3C6),
                             child: Text(
                               user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF00122D),
                                 fontWeight: FontWeight.bold,
                               ),
@@ -452,7 +452,7 @@ class _AdminDashboardState extends State<SuperHome> {
                           ),
                           title: Text(
                             user.name,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
@@ -462,17 +462,17 @@ class _AdminDashboardState extends State<SuperHome> {
                             children: [
                               Text(
                                 user.email,
-                                style: TextStyle(color: Colors.white70),
+                                style: const TextStyle(color: Colors.white70),
                               ),
                               if (user.studentId != null && user.studentId!.isNotEmpty && user.role.toLowerCase() == 'student')
                                 Text(
                                   'Student ID: ${user.studentId}',
-                                  style: TextStyle(color: Colors.white70),
+                                  style: const TextStyle(color: Colors.white70),
                                 ),
                               if (user.mobileNumber != null && user.mobileNumber!.isNotEmpty)
                                 Text(
                                   'Phone: ${user.mobileNumber}',
-                                  style: TextStyle(color: Colors.white70),
+                                  style: const TextStyle(color: Colors.white70),
                                 ),
                               Text(
                                 'Role: ${_getRoleDisplayName(user.role)}',
@@ -483,7 +483,7 @@ class _AdminDashboardState extends State<SuperHome> {
                               ),
                               Text(
                                 'Joined: ${user.dateJoined}',
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
+                                style: const TextStyle(color: Colors.white70, fontSize: 12),
                               ),
                             ],
                           ),
@@ -491,13 +491,13 @@ class _AdminDashboardState extends State<SuperHome> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.edit),
-                                color: Color(0xFF53E3C6),
+                                icon: const Icon(Icons.edit),
+                                color: const Color(0xFF53E3C6),
                                 onPressed: () => _changeUserRole(user),
                                 tooltip: 'Change Role',
                               ),
                               IconButton(
-                                icon: Icon(Icons.person_remove),
+                                icon: const Icon(Icons.person_remove),
                                 color: Colors.redAccent,
                                 onPressed: () => _ejectUser(user),
                                 tooltip: 'Eject User',
@@ -538,8 +538,8 @@ class _AdminDashboardState extends State<SuperHome> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20.0),
                   child: Text(
                     'Add New Admin',
                     style: TextStyle(
@@ -779,13 +779,13 @@ class _AdminDashboardState extends State<SuperHome> {
   Color _getRoleColor(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
-        return Color(0xFFFF5555);
+        return const Color(0xFFFF5555);
       case 'canteen_manager':
-        return Color(0xFF53E3C6);
+        return const Color(0xFF53E3C6);
       case 'cafeteria_manager':
-        return Color(0xFF64B5F6);
+        return const Color(0xFF64B5F6);
       case 'student':
-        return Color(0xFFE040FB);
+        return const Color(0xFFE040FB);
       default:
         return Colors.grey;
     }
@@ -812,20 +812,20 @@ class _AdminDashboardState extends State<SuperHome> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF00122D),
-          title: Text('Confirm Ejection', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF00122D),
+          title: const Text('Confirm Ejection', style: TextStyle(color: Colors.white)),
           content: Text(
             'Are you sure you want to eject ${user.name}?',
-            style: TextStyle(color: Colors.white70),
+            style: const TextStyle(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Eject', style: TextStyle(color: Colors.redAccent)),
+              child: const Text('Eject', style: TextStyle(color: Colors.redAccent)),
             ),
           ],
         );
@@ -861,7 +861,7 @@ class _AdminDashboardState extends State<SuperHome> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${user.name} has been ejected'),
-              backgroundColor: Color(0xFF00122D),
+              backgroundColor: const Color(0xFF00122D),
             ),
           );
         }
@@ -887,39 +887,39 @@ class _AdminDashboardState extends State<SuperHome> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF00122D),
-          title: Text('Change Role', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF00122D),
+          title: const Text('Change Role', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Select new role for ${user.name}',
-                style: TextStyle(color: Colors.white70),
+                style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 16),
               ListTile(
-                title: Text('Admin', style: TextStyle(color: Colors.white)),
+                title: const Text('Admin', style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.of(context).pop('admin'),
                 tileColor: Colors.white.withOpacity(0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ListTile(
-                title: Text('Canteen Manager', style: TextStyle(color: Colors.white)),
+                title: const Text('Canteen Manager', style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.of(context).pop('canteen_manager'),
                 tileColor: Colors.white.withOpacity(0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ListTile(
-                title: Text('Cafeteria Manager', style: TextStyle(color: Colors.white)),
+                title: const Text('Cafeteria Manager', style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.of(context).pop('cafeteria_manager'),
                 tileColor: Colors.white.withOpacity(0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ListTile(
-                title: Text('Student', style: TextStyle(color: Colors.white)),
+                title: const Text('Student', style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.of(context).pop('student'),
                 tileColor: Colors.white.withOpacity(0.1),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -961,7 +961,7 @@ class _AdminDashboardState extends State<SuperHome> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${user.name}\'s role has been updated to ${_getRoleDisplayName(newRole)}'),
-              backgroundColor: Color(0xFF00122D),
+              backgroundColor: const Color(0xFF00122D),
             ),
           );
         }

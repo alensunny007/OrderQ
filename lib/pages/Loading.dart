@@ -42,11 +42,25 @@ class _SplashScreen extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App logo
-              Image.asset(
-                'assets/images/logo-orderq.png', // Replace with your actual logo path
-                height: 200,
-                fit: BoxFit.contain,
+              // App logo with white background and border radius
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/logo-orderq.png',
+                  height: 160,
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(height: 20), // Spacing below the logo
               const Text(

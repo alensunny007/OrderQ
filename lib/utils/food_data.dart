@@ -12,7 +12,7 @@ List<Map<String, dynamic>> foodItems = [
   {
     'id': '1',
     'title': 'Biriyani',
-    'price': '65',
+    'price': '60',
     'imageUrl': 'assets/images/biriyani.jpg',
     'description': 'A rice dish with meat.',
   },
@@ -72,4 +72,47 @@ List<Map<String, dynamic>> foodItems = [
     'imageUrl': 'assets/images/fry.jpg',
     'description': 'Deep fried fish.',
   },
+   { 
+    'id': '10',
+    'title': 'Chicken Curry',
+    'price': '50',
+    'imageUrl': 'assets/images/chickencurry.jpg',
+    'description': 'Spicy masala Chicken curry.',
+   },
+    {
+      'id': '11',
+      'title': 'Pathiri',
+      'price': '40',
+      'imageUrl': 'assets/images/pathiri.jpg',
+      'description': 'Spicy masala Beef curry.',
+    },
+    {
+      'id': '13',
+      'title': 'Kadala Curry',
+      'price': '10',
+      'imageUrl': 'assets/images/kadalacurry.jpg',
+      'description': 'Kadala Curry is a South Indian black chickpea dish .',
+    },
+    {
+      'id': '14',
+      'title': 'Greenpeas Curry',
+      'price': '10',
+      'imageUrl': 'assets/images/Greenpeascurry.jpg',
+      'description': 'Greenpeas in a spiced coconut gravy.',
+    },
+    {
+      'id': '15',
+      'title': 'Bhaji Curry',
+      'price': '10',
+      'imageUrl': 'assets/images/Bhajicurry.jpg',
+      'description': 'Spiced potato curry.',
+    },
+    {
+      'id': '16',
+      'title': 'Biriyani Rice',
+      'price': '40',
+      'imageUrl': 'assets/images/biriyanirice.jpg',
+      'description': 'Biriyani rice with chicken.',
+    },
+    
 ];

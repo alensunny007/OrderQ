@@ -38,12 +38,19 @@ class _StuHomePageState extends State<StuHomePage> {
   String name = "User"; // Default value
   bool _isLoadingUserData = false; // Start with false to prevent initial loading
 
+  // Add search-related variables
+  Timer? _searchDebounce;
+  String _searchQuery = '';
+  List<Map<String, dynamic>> _filteredItems = [];
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     // Set loading to true right before fetching
     setState(() {
       _isLoadingUserData = true;
+      _filteredItems = []; // Initialize as empty
     });
     _loadUserData(); // Add this method call to fetch user data
     _loadDailyMenu();
@@ -53,8 +60,10 @@ class _StuHomePageState extends State<StuHomePage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _favoritesSubscription?.cancel();
     _cartSubscription?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
   
@@ -112,6 +121,7 @@ class _StuHomePageState extends State<StuHomePage> {
 
       setState(() {
         availableItems = menuItems;
+        _filteredItems = menuItems; // Set filtered items to all items initially
         // Update _isInCart length to match availableItems
         _isInCart = List.generate(availableItems.length, (_) => false);
       });
@@ -119,9 +129,46 @@ class _StuHomePageState extends State<StuHomePage> {
       print('Error loading daily menu: $e');
       setState(() {
         availableItems = [];
+        _filteredItems = []; // Also clear filtered items
         _isInCart = []; // Clear the list when there are no items
       });
     }
+  }
+
+  // Method for delayed search
+  void _onSearchChanged(String query) {
+    // Cancel any previous timer
+    if (_searchDebounce?.isActive ?? false) {
+      _searchDebounce!.cancel();
+    }
+
+    // Update search query immediately
+    setState(() {
+      _searchQuery = query;
+    });
+
+    // Set a timer for 500ms
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      // Only search if query is not empty
+      if (_searchQuery.isNotEmpty) {
+        _searchItems(_searchQuery);
+      } else {
+        // If query is empty, show all items
+        setState(() {
+          _filteredItems = availableItems;
+        });
+      }
+    });
+  }
+
+  // Method to filter items based on search query
+  void _searchItems(String query) {
+    setState(() {
+      _filteredItems = availableItems.where((item) {
+        final title = item['title'].toString().toLowerCase();
+        return title.contains(query.toLowerCase());
+      }).toList();
+    });
   }
 
   void _setupFavoritesListener() {
@@ -324,8 +371,11 @@ class _StuHomePageState extends State<StuHomePage> {
   void _updateSelectedOption(String option) {
     setState(() {
       selectedOption = option;
+      // Reset search when changing categories
+      _searchQuery = '';
+      _searchController.clear();
     });
-    _loadDailyMenu(); // This will update availableItems and _isInCart
+    _loadDailyMenu(); // This will update availableItems and _filteredItems
   }
 
   @override
@@ -372,218 +422,218 @@ class _StuHomePageState extends State<StuHomePage> {
       width: double.infinity,
       height: double.infinity,
       color: Color(0xFF00122D),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with gradient
-            Container(
-              padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with gradient
+              Container(
+                padding: const EdgeInsets.only(top: 20, bottom: 20, left: 16, right: 16),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(15),
+                    bottomRight: Radius.circular(15),
+                  ),
                 ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.white,
-                            child: GestureDetector(
-                              onTap: () {
-                                // Navigate to profile section when avatar is clicked
-                                _onItemTapped(1); // Index 1 is for Profile page
-                              },
-                              child: Icon(Icons.person, color: Color(0xFF00122D)),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
                             children: [
-                              // Dynamic greeting with loading indicator
-                              _isLoadingUserData
-                                ? SizedBox(
-                                    height: 22,
-                                    width: 120,
-                                    child: LinearProgressIndicator(
-                                      backgroundColor: Colors.white30,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Colors.white,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    _onItemTapped(1);
+                                  },
+                                  child: Icon(Icons.person, color: Color(0xFF00122D)),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: _isLoadingUserData
+                                  ? SizedBox(
+                                      height: 22,
+                                      width: 120,
+                                      child: LinearProgressIndicator(
+                                        backgroundColor: Colors.white30,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                                      ),
+                                    )
+                                  : Text(
+                                      "Hello, $name",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  )
-                                : Text(
-                                    "Hello, $name",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                backgroundColor: Color(0xFF00122D),
-                                title: Text('Logout', 
-                                  style: TextStyle(color: Colors.white)
-                                ),
-                                content: Text(
-                                  'Are you sure you want to logout?',
-                                  style: TextStyle(color: Colors.white70)
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: Text('Cancel', 
-                                      style: TextStyle(color: Colors.white70)
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      try {
-                                        await FirebaseAuth.instance.signOut();
-                                        if (context.mounted) {
-                                          Navigator.of(context).pop(); // Close dialog
-                                          Navigator.pushReplacementNamed(context, '/loginPage');
-                                        }
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error logging out. Please try again.'),
-                                            backgroundColor: Colors.redAccent,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: Text('Logout',
-                                      style: TextStyle(color: Colors.redAccent)
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.logout, // Changed from notifications_outlined to logout
-                          color: Colors.white,
-                          size: 24,
                         ),
-                        tooltip: 'Logout', // Updated tooltip
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSearchBar(),
-                ],
+                        IconButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor: Color(0xFF00122D),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  title: Text('Logout', 
+                                    style: TextStyle(color: Colors.white)
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to logout?',
+                                    style: TextStyle(color: Colors.white70)
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: Text('Cancel', 
+                                        style: TextStyle(color: Colors.white70)
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        try {
+                                          await FirebaseAuth.instance.signOut();
+                                          if (context.mounted) {
+                                            Navigator.of(context).pop(); // Close dialog
+                                            Navigator.pushReplacementNamed(context, '/loginPage');
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error logging out. Please try again.'),
+                                              backgroundColor: Colors.redAccent,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Text('Logout',
+                                        style: TextStyle(color: Colors.redAccent)
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.logout,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          tooltip: 'Logout',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSearchBar(),
+                  ],
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Category options
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Food Categories header removed as requested
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+              
+              const SizedBox(height: 16),
+              
+              // Category options
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Adding spacing to push buttons further right
-                        SizedBox(width: 40),
                         _buildCategoryChip("Canteen", selectedOption == "Canteen"),
-                        SizedBox(width: 100), // Increased spacing to push Cafeteria more to the right
                         _buildCategoryChip("Cafeteria", selectedOption == "Cafeteria"),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Popular Food Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Popular Foods",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white, // Changed to white for visibility on dark background
-                        ),
+              
+              const SizedBox(height: 20),
+              
+              // Popular Food Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Popular Foods",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      // "See All" text removed as requested
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFoodGrid(),
-                ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildFoodGrid(),
+                  ],
+                ),
               ),
-            ),
-          ],
+              
+              // Add some bottom padding for scroll
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCategoryChip(String label, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        if (label == "Canteen" || label == "Cafeteria") {
-          _updateSelectedOption(label);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? Color(0xFF53E3C6) : Colors.white, // Changed to teal when selected
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(
-            color: isSelected ? Color(0xFF53E3C6) : Colors.grey.shade300,
-          ),
-          boxShadow: isSelected 
-            ? [BoxShadow(
-                color: Color(0xFF53E3C6).withOpacity(0.3),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              )]
-            : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: GestureDetector(
+          onTap: () {
+            if (label == "Canteen" || label == "Cafeteria") {
+              _updateSelectedOption(label);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? Color(0xFF53E3C6) : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: isSelected ? Color(0xFF53E3C6) : Colors.grey.shade300,
+              ),
+              boxShadow: isSelected 
+                ? [BoxShadow(
+                    color: Color(0xFF53E3C6).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  )]
+                : null,
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
@@ -591,70 +641,103 @@ class _StuHomePageState extends State<StuHomePage> {
   }
 
   Widget _buildSearchBar() {
-   return Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 30),
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), // Reduced vertical padding
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(50),
-    ),
-    child: Row(
-      children: [
-        const Icon(Icons.search, color: Colors.grey, size: 20), // Slightly smaller icon
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search',
-              border: InputBorder.none,
-              hintStyle: TextStyle(color: Colors.grey.shade400),
-              isDense: true, // Makes the TextField more compact
-              contentPadding: EdgeInsets.zero, // Removes internal padding
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: Colors.grey, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Search foods...',
+                border: InputBorder.none,
+                hintStyle: TextStyle(color: Colors.grey.shade400),
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  ),
-);
+          if (_searchQuery.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
+                  _filteredItems = availableItems;
+                });
+              },
+              child: Icon(Icons.clear, color: Colors.grey, size: 20),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildFoodGrid() {
-    return availableItems.isEmpty
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.restaurant_menu,
-                    size: 64, color: Colors.white70), // Changed to white for visibility
-                const SizedBox(height: 16),
-                Text(
-                  'No items available in ${selectedOption} today',
-                  style: const TextStyle(
-                    color: Colors.white70, // Changed to white for visibility
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+    final itemsToDisplay = _searchQuery.isEmpty ? availableItems : _filteredItems;
+    
+    if (itemsToDisplay.isEmpty) {
+      return Container(
+        height: 200,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade900.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.restaurant_menu, size: 64, color: Colors.white70),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isEmpty 
+                ? 'No items available in $selectedOption today'
+                : 'No items match "$_searchQuery"',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
-          )
-        : GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: availableItems.length,
-            itemBuilder: (context, index) {
-              final item = availableItems[index];
-              return _buildFoodCard(item, index);
-            },
-          );
+          ],
+        ),
+      );
+    }
+    
+    // Calculate responsive grid parameters based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth > 600 ? 3 : 2; // More columns on wider screens
+    
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 12, // Increased spacing
+        mainAxisSpacing: 12, // Increased spacing
+        childAspectRatio: 0.7, // Adjusted ratio to give more height for the larger elements
+      ),
+      itemCount: itemsToDisplay.length,
+      itemBuilder: (context, index) {
+        final item = itemsToDisplay[index];
+        return _buildFoodCard(item, index);
+      },
+    );
   }
 
   Widget _buildFoodCard(Map<String, dynamic> item, int index) {
@@ -664,31 +747,22 @@ class _StuHomePageState extends State<StuHomePage> {
         '${selectedOption.toLowerCase()}_${item['id'] ?? DateTime.now().toString()}';
     bool isFavorite = _favoriteStates[itemId] == true;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Card(
+      elevation: 3, // Slightly increased elevation for better shadow
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Food Image
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                 child: Container(
-                  height: 100,
+                  height: 100, // Slightly increased height for image
                   width: double.infinity,
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                   ),
@@ -705,10 +779,10 @@ class _StuHomePageState extends State<StuHomePage> {
                 child: GestureDetector(
                   onTap: () => toggleFavorite(item, index),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6), // Increased padding
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
@@ -720,7 +794,7 @@ class _StuHomePageState extends State<StuHomePage> {
                     child: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
                       color: isFavorite ? Colors.red : Colors.grey,
-                      size: 20,
+                      size: 20, // Increased icon size
                     ),
                   ),
                 ),
@@ -729,89 +803,101 @@ class _StuHomePageState extends State<StuHomePage> {
           ),
           
           // Content
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['title'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF00122D),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  selectedOption,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '₹${item['price']}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF900C3F),
-                      ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(10.0), // Increased padding
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['title'],
+                    style: const TextStyle(
+                      fontSize: 16, // Increased font size
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00122D),
                     ),
-                    GestureDetector(
-                      onTap: () => toggleCart(item, index),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: isInCart ? Color(0xFF53E3C6) : Colors.grey.shade200,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isInCart ? Icons.shopping_cart : Icons.add_shopping_cart,
-                          color: isInCart ? Colors.white : Colors.grey.shade700,
-                          size: 20,
-                        ),
-                      ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    selectedOption,
+                    style: TextStyle(
+                      fontSize: 12, // Increased font size
+                      color: Colors.grey.shade600,
                     ),
-                    const SizedBox(width: 8), // Added spacing
-                    // Added info/description button
-                    GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(item['title']),
-                            content: Text(item['description'] ?? 'No description available'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Close'),
-                              ),
-                            ],
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '₹${item['price']}',
+                          style: const TextStyle(
+                            fontSize: 18, // Increased font size for price
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF900C3F),
                           ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: Colors.grey,
-                          size: 20,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      // Layout buttons in a row with proper spacing
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => toggleCart(item, index),
+                            child: Container(
+                              padding: const EdgeInsets.all(8), // Increased padding
+                              decoration: BoxDecoration(
+                                color: isInCart ? Color(0xFF53E3C6) : Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Icon(
+                                isInCart ? Icons.shopping_cart : Icons.add_shopping_cart,
+                                color: isInCart ? Colors.white : Colors.grey.shade700,
+                                size: 22, // Increased icon size
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8), // Increased spacing
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  title: Text(item['title']),
+                                  content: Text(item['description'] ?? 'No description available'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Close'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8), // Increased padding
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: const Icon(
+                                Icons.info_outline,
+                                color: Colors.grey,
+                                size: 22, // Increased icon size
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
