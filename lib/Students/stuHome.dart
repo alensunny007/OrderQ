@@ -411,7 +411,7 @@ class _StuHomePageState extends State<StuHomePage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.favorite), label: 'Favourites'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.contact_mail), label: 'Contact'),
+              icon: Icon(Icons.group), label: 'About Us'),
         ],
       ),
     );

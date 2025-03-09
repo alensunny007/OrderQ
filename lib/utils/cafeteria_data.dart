@@ -65,4 +65,25 @@ List<Map<String, dynamic>> cafefoodItems = [
     'imageUrl': 'assets/images/badammilk.jpg',
     'description': 'Cold drink with essence of badham and milk.',
   },
+  {
+    'id': '9',
+    'title': 'Egg Puffs',
+    'price': '12',
+    'imageUrl': 'assets/images/puffs.JPG',
+    'description': 'Boiled eggs with a flavorful onion filling wrapped in flaky puff pastry. ',
+  },
+  {
+    'id': '10',
+    'title': 'Watermelon Juice',
+    'price': '10',
+    'imageUrl': 'assets/images/watermelon.jpg',
+    'description': 'Cold refreshing drink made up with fresh watermelon.',
+  },
+  {
+    'id': '11',
+    'title': 'Chicken Cutlet',
+    'price': '13',
+    'imageUrl': 'assets/images/cutlet.jpg',
+    'description': 'Thinly sliced chicken that are breaded and fried to perfection.',
+  },
 ];
