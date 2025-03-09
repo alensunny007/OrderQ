@@ -3,7 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:math';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -13,23 +19,54 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final TextEditingController _nameController = TextEditingController(text: "student");
-  final TextEditingController _emailController = TextEditingController(text: "student@gmail.com");
-  final TextEditingController _phoneController = TextEditingController(text: "1234567890");
-  final TextEditingController _universityIdController = TextEditingController(text: "VDA21CS009");
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _universityIdController = TextEditingController();
+  
   bool _isEditing = false;
   bool _isLoading = false;
   String? _errorMessage;
   File? _imageFile;
   String? _profileImageUrl;
   bool _isUploadingImage = false;
+  double _uploadProgress = 0.0;
 
   final ImagePicker _picker = ImagePicker();
+  
+  // ImgBB API key from environment variables
+  late String _imgbbApiKey;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => _loadUserData());
+    // Load API key from .env file
+    _imgbbApiKey = dotenv.env['IMGBB_API_KEY'] ?? '';
+    print("ImgBB API Key loaded: ${_imgbbApiKey.isNotEmpty ? 'Yes (${_imgbbApiKey.substring(0, min(3, _imgbbApiKey.length))}...)' : 'No'}");
+    
+    _loadUserData();
+    _testImgBBApiKey(); // Test if the API key is valid
+  }
+
+  // Test if the ImgBB API key is valid
+  Future<void> _testImgBBApiKey() async {
+    try {
+      print("Testing ImgBB API key...");
+      final response = await http.get(
+        Uri.parse('https://api.imgbb.com/1/upload?key=$_imgbbApiKey'),
+      );
+      
+      print("ImgBB API test status code: ${response.statusCode}");
+      
+      // A valid key should return a 400 error asking for an image
+      if (response.statusCode == 400 && response.body.contains("image")) {
+        print("✓ API key appears to be valid (expected 400 error about missing image)");
+      } else {
+        print("✗ API key appears to be invalid - Response: ${response.body.substring(0, min(100, response.body.length))}");
+      }
+    } catch (e) {
+      print("Error testing API key: $e");
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -50,12 +87,19 @@ class _ProfilePageState extends State<ProfilePage> {
         
         if (userData.exists && mounted) {
           setState(() {
-            _nameController.text = userData.data()?['name'] ?? 'student';
-            _emailController.text = userData.data()?['email'] ?? 'student@gmail.com';
-            _phoneController.text = userData.data()?['phone'] ?? '1234567890';
-            _universityIdController.text = userData.data()?['universityId'] ?? 'VDA21CS009';
+            _nameController.text = userData.data()?['name'] ?? '';
+            _emailController.text = userData.data()?['email'] ?? user.email ?? '';
+            _phoneController.text = userData.data()?['phone'] ?? '';
+            _universityIdController.text = userData.data()?['universityId'] ?? '';
             _profileImageUrl = userData.data()?['profileImageUrl'];
           });
+          
+          // Debug log to verify URL is being loaded
+          print("Loaded profile image URL from Firestore: $_profileImageUrl");
+        } else {
+          // If document doesn't exist, initialize with default values
+          _nameController.text = user.displayName ?? '';
+          _emailController.text = user.email ?? '';
         }
       }
     } catch (e) {
@@ -75,48 +119,120 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _getImageFromGallery() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 75,
-    );
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
 
-    if (pickedFile != null && mounted) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+      if (pickedFile != null && mounted) {
+        print("Image picked: ${pickedFile.path}");
+        
+        // Compress image
+        final tempDir = await getTemporaryDirectory();
+        final targetPath = path.join(tempDir.path, 'compressed_${path.basename(pickedFile.path)}');
+        
+        try {
+          final compressedFile = await FlutterImageCompress.compressAndGetFile(
+            pickedFile.path,
+            targetPath,
+            quality: 85,
+            minWidth: 600,
+            minHeight: 600,
+          );
+          
+          if (compressedFile != null) {
+            setState(() {
+              _imageFile = File(compressedFile.path);
+            });
+            print("Image compressed: ${compressedFile.path}");
+          } else {
+            setState(() {
+              _imageFile = File(pickedFile.path);
+            });
+            print("Compression failed, using original image");
+          }
+        } catch (e) {
+          // Fallback to non-compressed image
+          setState(() {
+            _imageFile = File(pickedFile.path);
+          });
+          print("Error compressing image: $e");
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to pick image: ${e.toString()}');
     }
   }
 
-  Future<String?> _uploadImageToFirebase() async {
+  Future<String?> _uploadImageToImgBB() async {
     if (_imageFile == null) return _profileImageUrl;
 
+    print("Starting image upload to ImgBB");
     setState(() {
       _isUploadingImage = true;
+      _uploadProgress = 0.0;
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return null;
-
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_images')
-          .child('${user.uid}.jpg');
-
-      final uploadTask = storageRef.putFile(_imageFile!);
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      setState(() {
-        _profileImageUrl = downloadUrl;
-        _isUploadingImage = false;
+      // Read file as bytes
+      final bytes = await _imageFile!.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      
+      print("Image converted to base64, sending to ImgBB...");
+      print("API Key being used: ${_imgbbApiKey.substring(0, min(5, _imgbbApiKey.length))}...");
+      
+      // Create request
+      final response = await http.post(
+        Uri.parse('https://api.imgbb.com/1/upload'),
+        body: {
+          'key': _imgbbApiKey,
+          'image': base64Image,
+          'name': 'profile_${FirebaseAuth.instance.currentUser?.uid ?? DateTime.now().millisecondsSinceEpoch}',
+        },
+      );
+      
+      print("ImgBB response status code: ${response.statusCode}");
+      print("ImgBB response body (first 100 chars): ${response.body.substring(0, min(100, response.body.length))}...");
+      
+      if (response.statusCode != 200) {
+        print("Full ImgBB error response: ${response.body}");
+        throw Exception('ImgBB returned status code ${response.statusCode}');
+      }
+      
+      final jsonData = json.decode(response.body);
+      
+      // Detailed logging of the response structure
+      print("ImgBB Response Structure:");
+      jsonData.keys.forEach((key) {
+        print("- $key: ${jsonData[key]}");
+        if (key == 'data' && jsonData[key] is Map) {
+          (jsonData[key] as Map).keys.forEach((dataKey) {
+            print("  - $dataKey: ${jsonData[key][dataKey]}");
+          });
+        }
       });
-
-      return downloadUrl;
+      
+      // Check if upload was successful
+      if (jsonData['success'] == true) {
+        final String imageUrl = jsonData['data']['url'];
+        print("✓ Image uploaded successfully to ImgBB. URL: $imageUrl");
+        
+        setState(() {
+          _profileImageUrl = imageUrl;
+          _isUploadingImage = false;
+          _uploadProgress = 1.0;
+        });
+        
+        return imageUrl;
+      } else {
+        print("✗ ImgBB upload failed: ${jsonData['error']?['message'] ?? 'Unknown error'}");
+        throw Exception('Failed to upload image: ${jsonData['error']?['message'] ?? 'Unknown error'}');
+      }
     } catch (e) {
-      print("Error uploading image: $e");
+      print("✗ Error uploading image: $e");
       setState(() {
         _isUploadingImage = false;
       });
@@ -156,28 +272,41 @@ class _ProfilePageState extends State<ProfilePage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         // Upload image if selected
-        String? imageUrl = _imageFile != null 
-            ? await _uploadImageToFirebase() 
-            : _profileImageUrl;
+        String? imageUrl = _profileImageUrl;  // Default to current URL
+        
+        if (_imageFile != null) {
+          print("Image file selected, uploading to ImgBB...");
+          imageUrl = await _uploadImageToImgBB();
+          print("After upload, imageUrl: $imageUrl");
+        } else {
+          print("No new image file selected, keeping existing URL: $imageUrl");
+        }
 
-        // Update Firestore
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
+        // Create a data map for Firestore update
+        final Map<String, dynamic> userData = {
           'name': _nameController.text,
           'email': _emailController.text,
           'phone': _phoneController.text,
           'universityId': _universityIdController.text,
-          if (imageUrl != null) 'profileImageUrl': imageUrl,
-        });
+          'lastUpdated': FieldValue.serverTimestamp(),
+        };
         
-        // Update email in Firebase Auth if it changed
-        if (user.email != _emailController.text) {
-          // This requires re-authentication in a production app
-          // Here we're just updating Firestore
-          print("Note: Email changed in Firestore but not in Auth. Re-authentication required for that.");
+        // Only add profileImageUrl if we have one
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          userData['profileImageUrl'] = imageUrl;
+          print("Adding imageUrl to userData for Firestore: $imageUrl");
+        } else {
+          print("No valid imageUrl to store in Firestore");
         }
+
+        print("Updating Firestore document for user ${user.uid}");
+        // Update Firestore document
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set(userData, SetOptions(merge: true));
+        
+        print("✓ Firestore document updated successfully");
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -189,12 +318,12 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       }
     } catch (e) {
-      print("Error saving user data: $e");
+      print("✗ Error saving user data: $e");
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to update profile: $e';
         });
-        _showErrorSnackBar('Failed to update profile: ${e.toString().contains('permission-denied') ? 'Permission denied' : 'Unknown error'}');
+        _showErrorSnackBar('Failed to update profile: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -206,12 +335,65 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _showErrorSnackBar(String message) {
+  // Function to test ImgBB API directly with hardcoded key (for debugging)
+  Future<void> _testDirectApiUpload() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      if (_imageFile == null) {
+        _showErrorSnackBar('Please select an image first');
+        return;
+      }
+      
+      // Read file as bytes
+      final bytes = await _imageFile!.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      
+      // Try direct upload
+      final directKey = _imgbbApiKey; // Use your API key from .env
+      
+      print("Testing direct upload with key: ${directKey.substring(0, min(5, directKey.length))}...");
+      
+      final response = await http.post(
+        Uri.parse('https://api.imgbb.com/1/upload'),
+        body: {
+          'key': directKey,
+          'image': base64Image,
+        },
+      );
+      
+      print("Direct test response: ${response.statusCode}");
+      print("Direct test body: ${response.body}");
+      
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['success'] == true) {
+          final imageUrl = jsonData['data']['url'];
+          _showErrorSnackBar('Test successful! URL: ${imageUrl.substring(0, min<int>(20, imageUrl.length))}...', isError: false);
+        } else {
+          _showErrorSnackBar('Test failed: ${jsonData['error']['message']}');
+        }
+      } else {
+        _showErrorSnackBar('Test failed with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Test error: $e");
+      _showErrorSnackBar('Test error: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showErrorSnackBar(String message, {bool isError = true}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: isError ? Colors.red : Colors.green,
       ),
     );
   }
@@ -279,11 +461,57 @@ class _ProfilePageState extends State<ProfilePage> {
                             _buildProfileSection(),
                             const SizedBox(height: 20),
                             _buildDetailsCard(),
+                            // Debug section
+                            _buildDebugSection(),
                           ],
                         ),
                       ),
                     ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDebugSection() {
+    // Only show in debug mode - remove in production
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Debug Options",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          if (_profileImageUrl != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Current Image URL:", 
+                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text(_profileImageUrl!,
+                    style: const TextStyle(color: Colors.white60, fontSize: 10),
+                    softWrap: true),
+                ],
+              ),
+            ),
+          ElevatedButton(
+            onPressed: _testDirectApiUpload,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orangeAccent,
+              minimumSize: const Size(double.infinity, 40),
+            ),
+            child: const Text("Test Direct Upload"),
+          ),
+        ],
       ),
     );
   }
@@ -301,46 +529,56 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.white.withOpacity(0.2),
                 border: Border.all(color: Colors.white, width: 2),
               ),
-              child: _imageFile != null
-                  ? ClipOval(
-                      child: Image.file(
-                        _imageFile!,
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
+              child: _isUploadingImage
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        value: _uploadProgress > 0 ? _uploadProgress : null,
+                        color: Colors.white,
                       ),
                     )
-                  : _profileImageUrl != null
+                  : _imageFile != null
                       ? ClipOval(
-                          child: Image.network(
-                            _profileImageUrl!,
+                          child: Image.file(
+                            _imageFile!,
                             width: 120,
                             height: 120,
                             fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) => const Icon(
+                          ),
+                        )
+                      : _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                _profileImageUrl!,
+                                width: 120,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  print("Error loading image from URL: $error");
+                                  return const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.white,
+                                  );
+                                },
+                              ),
+                            )
+                          : const Icon(
                               Icons.person,
                               size: 60,
                               color: Colors.white,
                             ),
-                          ),
-                        )
-                      : const Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.white,
-                        ),
             ),
             if (_isEditing)
               Positioned(
@@ -377,7 +615,7 @@ class _ProfilePageState extends State<ProfilePage> {
         Column(
           children: [
             Text(
-              _nameController.text,
+              _nameController.text.isNotEmpty ? _nameController.text : "Student Name",
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -386,7 +624,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _emailController.text,
+              _emailController.text.isNotEmpty ? _emailController.text : "student@example.com",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.8),
                 fontSize: 16,
@@ -415,11 +653,11 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
           _isEditing
               ? _buildEditableDetailRow("Phone", _phoneController)
-              : _buildDetailRow("Phone", _phoneController.text),
+              : _buildDetailRow("Phone", _phoneController.text.isNotEmpty ? _phoneController.text : "Not set"),
           const SizedBox(height: 16),
           _isEditing
               ? _buildEditableDetailRow("University ID", _universityIdController)
-              : _buildDetailRow("University ID", _universityIdController.text),
+              : _buildDetailRow("University ID", _universityIdController.text.isNotEmpty ? _universityIdController.text : "Not set"),
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _isLoading ? null : () {
@@ -511,7 +749,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         SizedBox(
-          width: MediaQuery.of(context).size.width * 0.4, // More responsive width
+          width: MediaQuery.of(context).size.width * 0.5,
           child: TextField(
             controller: controller,
             style: const TextStyle(

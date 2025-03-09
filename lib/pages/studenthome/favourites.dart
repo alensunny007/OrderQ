@@ -127,9 +127,9 @@ class _FavouritesState extends State<Favourites>
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 15,
-            childAspectRatio: 0.8, // Match the home page aspect ratio
+            crossAxisSpacing: 12, // Match home page
+            mainAxisSpacing: 12, // Match home page
+            childAspectRatio: 0.7, // Match home page aspect ratio
           ),
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
@@ -156,31 +156,22 @@ class _FavouritesState extends State<Favourites>
       priceDisplay = '₹0';
     }
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Card(
+      elevation: 3, // Match home page
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)), // Match home page
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Food Image
+          // Food Image - match home page style
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)), // Match home page
                 child: Container(
                   height: 100,
                   width: double.infinity,
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8), // Match home page padding
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                   ),
@@ -197,10 +188,10 @@ class _FavouritesState extends State<Favourites>
                 child: GestureDetector(
                   onTap: () => _removeFromFavorites(docId),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6), // Match home page
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(15), // Match home page
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
@@ -220,88 +211,102 @@ class _FavouritesState extends State<Favourites>
             ],
           ),
           
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  data['title'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF00122D),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  displaySource,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      priceDisplay,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF900C3F),
-                      ),
+          // Content - match home page style
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(10.0), // Match home page padding
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['title'] ?? '',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00122D),
                     ),
-                    GestureDetector(
-                      onTap: () => _addToCart(data),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.add_shopping_cart,
-                          color: Colors.grey.shade700,
-                          size: 20,
-                        ),
-                      ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    displaySource,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(data['title'] ?? ''),
-                            content: Text(data['description'] ?? 'No description available'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Close'),
-                              ),
-                            ],
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          priceDisplay,
+                          style: const TextStyle(
+                            fontSize: 18, // Match home page
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF900C3F),
                           ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: Colors.grey,
-                          size: 20,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      // Layout buttons in a row with proper spacing - MATCH HOME PAGE PATTERN
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _addToCart(data),
+                            child: Container(
+                              padding: const EdgeInsets.all(8), // Match home page
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(15), // Match home page
+                              ),
+                              child: Icon(
+                                Icons.add_shopping_cart,
+                                color: Colors.grey.shade700,
+                                size: 22, // Match home page
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8), // Match home page spacing
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  title: Text(data['title'] ?? ''),
+                                  content: Text(data['description'] ?? 'No description available'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Close'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8), // Match home page
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(15), // Match home page
+                              ),
+                              child: const Icon(
+                                Icons.info_outline,
+                                color: Colors.grey,
+                                size: 22, // Match home page
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.orderq"
-    compileSdk = 34 // Ensure this is set to API level 33 or higher
+    compileSdk = 35 // Ensure this is set to API level 33 or higher
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

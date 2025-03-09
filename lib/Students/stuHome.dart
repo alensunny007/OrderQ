@@ -37,6 +37,8 @@ class _StuHomePageState extends State<StuHomePage> {
   // Add variables for user data
   String name = "User"; // Default value
   bool _isLoadingUserData = false; // Start with false to prevent initial loading
+  String? _profileImageUrl; // Add this for profile image URL
+  bool _isLoadingProfileImage = false; // Add loading state for profile image
 
   // Add search-related variables
   Timer? _searchDebounce;
@@ -50,6 +52,7 @@ class _StuHomePageState extends State<StuHomePage> {
     // Set loading to true right before fetching
     setState(() {
       _isLoadingUserData = true;
+      _isLoadingProfileImage = true;
       _filteredItems = []; // Initialize as empty
     });
     _loadUserData(); // Add this method call to fetch user data
@@ -74,6 +77,7 @@ class _StuHomePageState extends State<StuHomePage> {
       if (_isLoadingUserData) {
         setState(() {
           _isLoadingUserData = false;
+          _isLoadingProfileImage = false;
           // If loading takes too long, use the default name
         });
       }
@@ -87,53 +91,112 @@ class _StuHomePageState extends State<StuHomePage> {
           .get();
       
       if (userDoc.exists) {
-        // Extract name from the document data
+        // Extract data from the document
         Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
         
-        if (userData != null && userData.containsKey('name')) {
+        if (userData != null) {
           setState(() {
-            name = userData['name'];
+            if (userData.containsKey('name')) {
+              name = userData['name'];
+            }
+            
+            // Get profile image URL if it exists
+            if (userData.containsKey('profileImageUrl')) {
+              _profileImageUrl = userData['profileImageUrl'];
+              print("Loaded profile image URL: $_profileImageUrl");
+            }
+            
             _isLoadingUserData = false;
+            _isLoadingProfileImage = false;
           });
         } else {
           setState(() {
             _isLoadingUserData = false;
+            _isLoadingProfileImage = false;
             // Keep default name if 'name' field doesn't exist
           });
         }
       } else {
         setState(() {
           _isLoadingUserData = false;
+          _isLoadingProfileImage = false;
         });
       }
     } catch (e) {
       print('Error loading user data: $e');
       setState(() {
         _isLoadingUserData = false;
+        _isLoadingProfileImage = false;
       });
     }
   }
 
-  Future<void> _loadDailyMenu() async {
-    try {
-      final menuItems = await _menuService.getDailyMenuItems(
-          selectedOption.toLowerCase(), DateTime.now());
+ Future<void> _loadDailyMenu() async {
+  try {
+    final menuItems = await _menuService.getDailyMenuItems(
+        selectedOption.toLowerCase(), DateTime.now());
 
-      setState(() {
-        availableItems = menuItems;
-        _filteredItems = menuItems; // Set filtered items to all items initially
-        // Update _isInCart length to match availableItems
-        _isInCart = List.generate(availableItems.length, (_) => false);
-      });
-    } catch (e) {
-      print('Error loading daily menu: $e');
-      setState(() {
-        availableItems = [];
-        _filteredItems = []; // Also clear filtered items
-        _isInCart = []; // Clear the list when there are no items
-      });
-    }
+    setState(() {
+      availableItems = menuItems;
+      _filteredItems = menuItems; // Set filtered items to all items initially
+      
+      // Update _isInCart length to match availableItems
+      _isInCart = List.generate(availableItems.length, (_) => false);
+      
+      // Important: Check cart status for the newly loaded items
+      _updateCartStatesAfterMenuLoad();
+    });
+  } catch (e) {
+    print('Error loading daily menu: $e');
+    setState(() {
+      availableItems = [];
+      _filteredItems = []; // Also clear filtered items
+      _isInCart = []; // Clear the list when there are no items
+    });
   }
+}
+
+void _updateCartStatesAfterMenuLoad() async {
+  try {
+    // Get all cart items from Firestore
+    final cartSnapshot = await _firestore
+        .collection('users')
+        .doc(widget.userId)
+        .collection('cart')
+        .get();
+    
+    // Create a set of item IDs that are in the cart
+    Set<String> cartItemIds = {};
+    for (var doc in cartSnapshot.docs) {
+      final data = doc.data();
+      final itemId = data['id'] as String;
+      cartItemIds.add(itemId);
+    }
+    
+    // Check each available item against the cart items
+    String source = selectedOption.toLowerCase();
+    List<bool> newCartState = List.generate(availableItems.length, (_) => false);
+    
+    for (int i = 0; i < availableItems.length; i++) {
+      final item = availableItems[i];
+      final itemId = '${source}_${item['id']}';
+      
+      if (cartItemIds.contains(itemId)) {
+        newCartState[i] = true;
+      }
+    }
+    
+    // Update cart states
+    setState(() {
+      if (_cartStates.containsKey(source)) {
+        _cartStates[source] = newCartState;
+      }
+      _isInCart = List.from(newCartState);
+    });
+  } catch (e) {
+    print('Error updating cart states after menu load: $e');
+  }
+}
 
   // Method for delayed search
   void _onSearchChanged(String query) {
@@ -188,64 +251,57 @@ class _StuHomePageState extends State<StuHomePage> {
     });
   }
 
-  void _setupCartListener() {
-    _cartSubscription = _firestore
-        .collection('users')
-        .doc(widget.userId)
-        .collection('cart')
-        .snapshots()
-        .listen((snapshot) {
-      setState(() {
-        // Make sure _cartStates lists match the current availableItems length
-        _cartStates['canteen'] = List.generate(availableItems.length, (_) => false);
-        _cartStates['cafeteria'] = List.generate(availableItems.length, (_) => false);
+ 
+void _setupCartListener() {
+  _cartSubscription = _firestore
+      .collection('users')
+      .doc(widget.userId)
+      .collection('cart')
+      .snapshots()
+      .listen((snapshot) {
+    // Create a set of item IDs that are in the cart
+    Set<String> cartItemIds = {};
+    
+    // Add all cart item IDs to the set
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final itemId = data['id'] as String;
+      cartItemIds.add(itemId);
+    }
+    
+    setState(() {
+      // Reset cart states for both canteen and cafeteria
+      _cartStates['canteen'] = List.generate(availableItems.length, (_) => false);
+      _cartStates['cafeteria'] = List.generate(availableItems.length, (_) => false);
 
-        // Update cart states based on Firestore data
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          final itemId = data['id'] as String;
-          final itemSource = data['source'] as String;
-
-          final index = availableItems.indexWhere((item) {
-            String currentItemId = '${itemSource}_${item['id']}';
-            return currentItemId == itemId;
-          });
-
-          if (index != -1 && index < availableItems.length) {
-            // Add bounds checking to prevent out of range errors
-            if (_cartStates.containsKey(itemSource) && 
-                _cartStates[itemSource] != null && 
-                index < _cartStates[itemSource]!.length) {
-              _cartStates[itemSource]![index] = true;
-            }
+      // Iterate through available items and check if they're in the cart
+      for (int i = 0; i < availableItems.length; i++) {
+        // Create the item ID in the same format as stored in Firestore
+        final item = availableItems[i];
+        final source = selectedOption.toLowerCase();
+        final itemId = '${source}_${item['id']}';
+        
+        // Check if this item ID is in our set of cart items
+        if (cartItemIds.contains(itemId)) {
+          // Item is in cart, update its state
+          if (i < _cartStates[source]!.length) {
+            _cartStates[source]![i] = true;
           }
         }
+      }
 
-        // Update the current view's cart state with bounds checking
-        String source = selectedOption.toLowerCase();
-        if (_cartStates.containsKey(source) && _cartStates[source] != null) {
-          // Only update if lengths match to prevent range errors
-          if (_cartStates[source]!.length == availableItems.length) {
-            _isInCart = List.from(_cartStates[source]!);
-          } else {
-            // Recreate _isInCart with the correct length
-            _isInCart = List.generate(availableItems.length, (_) => false);
-            
-            // Copy values where possible
-            int minLength = _isInCart.length < _cartStates[source]!.length 
-                ? _isInCart.length 
-                : _cartStates[source]!.length;
-                
-            for (int i = 0; i < minLength; i++) {
-              _isInCart[i] = _cartStates[source]![i];
-            }
-          }
-        } else {
-          _isInCart = List.generate(availableItems.length, (_) => false);
-        }
-      });
+      // Update the current view's cart state
+      String source = selectedOption.toLowerCase();
+      if (_cartStates.containsKey(source) && 
+          _cartStates[source] != null && 
+          _cartStates[source]!.length == availableItems.length) {
+        _isInCart = List.from(_cartStates[source]!);
+      } else {
+        _isInCart = List.generate(availableItems.length, (_) => false);
+      }
     });
-  }
+  });
+}
 
   Future<void> toggleFavorite(Map<String, dynamic> item, int index) async {
     try {
@@ -450,14 +506,69 @@ class _StuHomePageState extends State<StuHomePage> {
                         Expanded(
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundColor: Colors.white,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    _onItemTapped(1);
-                                  },
-                                  child: Icon(Icons.person, color: Color(0xFF00122D)),
+                              // Profile Image - Updated to display actual profile image
+                              GestureDetector(
+                                onTap: () {
+                                  _onItemTapped(1); // Navigate to profile page
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: _isLoadingProfileImage
+                                    ? const Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF00122D),
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      )
+                                    : _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                                      ? ClipOval(
+                                          child: Image.network(
+                                            _profileImageUrl!,
+                                            width: 40,
+                                            height: 40,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                    value: loadingProgress.expectedTotalBytes != null
+                                                      ? loadingProgress.cumulativeBytesLoaded /
+                                                        loadingProgress.expectedTotalBytes!
+                                                      : null,
+                                                    color: Color(0xFF00122D),
+                                                    strokeWidth: 2,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) {
+                                              print("Error loading profile image in home: $error");
+                                              return const Icon(
+                                                Icons.person,
+                                                color: Color(0xFF00122D),
+                                                size: 24,
+                                              );
+                                            },
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.person,
+                                          color: Color(0xFF00122D),
+                                          size: 24,
+                                        ),
                                 ),
                               ),
                               const SizedBox(width: 10),

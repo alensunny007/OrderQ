@@ -57,7 +57,7 @@ class _SplashScreen extends State<SplashScreen> {
                   ],
                 ),
                 child: Image.asset(
-                  'assets/images/logo-orderq.png',
+                  'assets/images/logo_orderq.png',
                   height: 160,
                   fit: BoxFit.contain,
                 ),
