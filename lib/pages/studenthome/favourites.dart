@@ -88,11 +88,11 @@ class _FavouritesState extends State<Favourites>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.white70),
-                SizedBox(height: 16),
+                const Icon(Icons.error_outline, size: 64, color: Colors.white70),
+                const SizedBox(height: 16),
                 Text(
                   'Error: ${snapshot.error}',
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
               ],
             ),
@@ -100,7 +100,7 @@ class _FavouritesState extends State<Favourites>
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF53E3C6)),
             ),
@@ -112,11 +112,11 @@ class _FavouritesState extends State<Favourites>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.favorite_border, size: 64, color: Colors.white70),
-                SizedBox(height: 16),
+                const Icon(Icons.favorite_border, size: 64, color: Colors.white70),
+                const SizedBox(height: 16),
                 Text(
                   'No favorites in ${capitalizeFirstLetter(source)}',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ],
             ),
@@ -200,7 +200,7 @@ class _FavouritesState extends State<Favourites>
                         ),
                       ],
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.favorite,
                       color: Colors.red,
                       size: 20,
@@ -343,7 +343,7 @@ class _FavouritesState extends State<Favourites>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${item['title']} is already in your cart'),
-            backgroundColor: Color(0xFF00122D),
+            backgroundColor: const Color(0xFF00122D),
           ),
         );
       } else {
@@ -374,7 +374,7 @@ class _FavouritesState extends State<Favourites>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${item['title']} added to cart'),
-            backgroundColor: Color(0xFF53E3C6),
+            backgroundColor: const Color(0xFF53E3C6),
             action: SnackBarAction(
               label: 'VIEW CART',
               textColor: Colors.white,

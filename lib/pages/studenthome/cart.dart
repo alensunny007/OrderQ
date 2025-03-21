@@ -15,6 +15,7 @@ class _CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Main build method remains unchanged
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return const Center(child: Text('Please login'));
 
@@ -330,19 +331,37 @@ class _CartPageState extends State<CartPage> {
                   'Google Pay',
                   'assets/images/google-pay.png',
                   Icons.account_balance_wallet,
-                  () => _initiateUpiPayment(context, 'gpay', total, userId, items),
+                  () => _launchSpecificUpiApp(
+                    context, 
+                    'gpay', 
+                    total, 
+                    userId, 
+                    items
+                  ),
                 ),
                 _buildPaymentOption(
                   'PhonePe',
                   'assets/images/phonepe.png',
                   Icons.phone_android,
-                  () => _initiateUpiPayment(context, 'phonepe', total, userId, items),
+                  () => _launchSpecificUpiApp(
+                    context, 
+                    'phonepe', 
+                    total, 
+                    userId, 
+                    items
+                  ),
                 ),
                 _buildPaymentOption(
                   'Paytm',
                   'assets/images/paytm.png',
                   Icons.payment,
-                  () => _initiateUpiPayment(context, 'paytm', total, userId, items),
+                  () => _launchSpecificUpiApp(
+                    context, 
+                    'paytm', 
+                    total, 
+                    userId, 
+                    items
+                  ),
                 ),
               ],
             ),
@@ -365,7 +384,7 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
- Widget _buildPaymentOption(
+  Widget _buildPaymentOption(
       String name, String imagePath, IconData fallbackIcon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -414,8 +433,9 @@ class _CartPageState extends State<CartPage> {
       ),
     );
   }
-  // Initiate UPI payment with specific app
-  Future<void> _initiateUpiPayment(BuildContext context, String app,
+
+  // New method to launch a specific UPI app directly
+  Future<void> _launchSpecificUpiApp(BuildContext context, String appName,
       double amount, String userId, List<Map<String, dynamic>> items) async {
     // Close the payment options bottom sheet
     Navigator.pop(context);
@@ -431,21 +451,27 @@ class _CartPageState extends State<CartPage> {
       // Create order in Firestore first (pending status)
       await _createPendingOrder(userId, orderId, items, amount);
 
-      // Create the UPI payment URL
-      String upiUrl = _generateUpiUrl(
-        upiId: 'aasifabdullahtk@oksbi', // Replace with your UPI ID
-        name: 'Food Order',
-        amount: amount,
-        transactionRef: orderId,
-        note: 'Payment for food order #$orderId',
-        app: app,
-      );
+      // Payment details
+      final upiDetails = {
+        'upiId': 'aasifabdullahtk@oksbi', // Replace with your UPI ID
+        'name': 'Food Order',
+        'amount': amount.toStringAsFixed(2),
+        'transactionRef': orderId,
+        'note': 'Payment for food order #$orderId',
+      };
 
-      // Check if URI can be launched using the new Uri approach
-      final Uri uri = Uri.parse(upiUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      // Attempt to launch the specific UPI app
+      bool launched = false;
+      
+      if (appName == 'gpay') {
+        launched = await _launchGooglePay(upiDetails);
+      } else if (appName == 'phonepe') {
+        launched = await _launchPhonePe(upiDetails);
+      } else if (appName == 'paytm') {
+        launched = await _launchPaytm(upiDetails);
+      }
 
+      if (launched) {
         // Wait a bit for user to complete payment process
         await Future.delayed(Duration(seconds: 2));
         
@@ -454,17 +480,17 @@ class _CartPageState extends State<CartPage> {
             isProcessingPayment = false;
           });
           
-          _confirmPaymentStatus(context, orderId, userId, amount);
+          _confirmPaymentStatus(context, orderId, userId);
         }
       } else {
-        // No UPI app found
+        // App not found - show error
         setState(() {
           isProcessingPayment = false;
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No UPI payment app found'),
+            content: Text('Selected payment app not installed'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
@@ -490,34 +516,92 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  // Generate UPI payment URL with app-specific parameters
-  String _generateUpiUrl({
-    required String upiId,
-    required String name,
-    required double amount,
-    required String transactionRef,
-    required String note,
-    String app = '',
-    String currency = 'INR',
-  }) {
-    String baseUrl = 'upi://pay?'
-        'pa=$upiId&'
-        'pn=${Uri.encodeComponent(name)}&'
-        'am=${amount.toStringAsFixed(2)}&'
-        'cu=$currency&'
-        'tn=${Uri.encodeComponent(note)}&'
-        'tr=$transactionRef';
-
-    // Add app-specific package names - ensures opening of specific apps
-    if (app == 'gpay') {
-      return '$baseUrl&package=com.google.android.apps.nbu.paisa.user';
-    } else if (app == 'phonepe') {
-      return '$baseUrl&package=com.phonepe.app';
-    } else if (app == 'paytm') {
-      return '$baseUrl&package=net.one97.paytm';
+  // Launch Google Pay app directly
+  Future<bool> _launchGooglePay(Map<String, String> upiDetails) async {
+    try {
+      // Google Pay specific intent URL
+      final intentUrl = Uri.parse(
+        'tez://upi/pay?pa=${upiDetails['upiId']}'
+        '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
+        '&am=${upiDetails['amount']}'
+        '&cu=INR'
+        '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
+        '&tr=${upiDetails['transactionRef']}'
+      );
+      
+      return await launchUrl(
+        intentUrl,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      print('Google Pay launch error: $e');
+      return false;
     }
+  }
 
-    return baseUrl;
+  // Launch PhonePe app directly
+  Future<bool> _launchPhonePe(Map<String, String> upiDetails) async {
+    try {
+      // PhonePe specific intent URL
+      final intentUrl = Uri.parse(
+        'phonepe://pay?pa=${upiDetails['upiId']}'
+        '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
+        '&am=${upiDetails['amount']}'
+        '&cu=INR'
+        '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
+        '&tr=${upiDetails['transactionRef']}'
+      );
+      
+      return await launchUrl(
+        intentUrl,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      print('PhonePe launch error: $e');
+      return false;
+    }
+  }
+
+  // Launch Paytm app directly
+  Future<bool> _launchPaytm(Map<String, String> upiDetails) async {
+    try {
+      // Paytm specific intent URL
+      final intentUrl = Uri.parse(
+        'paytmmp://pay?pa=${upiDetails['upiId']}'
+        '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
+        '&am=${upiDetails['amount']}'
+        '&cu=INR'
+        '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
+        '&tr=${upiDetails['transactionRef']}'
+      );
+      
+      return await launchUrl(
+        intentUrl,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      print('Paytm launch error: $e');
+      
+      // Try alternate Paytm UPI URL
+      try {
+        final alternateUrl = Uri.parse(
+          'paytm://upi/pay?pa=${upiDetails['upiId']}'
+          '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
+          '&am=${upiDetails['amount']}'
+          '&cu=INR'
+          '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
+          '&tr=${upiDetails['transactionRef']}'
+        );
+        
+        return await launchUrl(
+          alternateUrl,
+          mode: LaunchMode.externalApplication,
+        );
+      } catch (e2) {
+        print('Alternate Paytm launch error: $e2');
+        return false;
+      }
+    }
   }
 
   Future<void> _createPendingOrder(
@@ -566,7 +650,7 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  void _confirmPaymentStatus(BuildContext context, String orderId, String userId, double amount) {
+  void _confirmPaymentStatus(BuildContext context, String orderId, String userId) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -639,7 +723,7 @@ class _CartPageState extends State<CartPage> {
       );
       
       // Navigate to order tracking or confirmation page (optional)
-      // Navigator.pushReplacement(F
+      // Navigator.pushReplacement(
       //   context,
       //   MaterialPageRoute(
       //     builder: (context) => OrderConfirmationPage(orderId: orderId),

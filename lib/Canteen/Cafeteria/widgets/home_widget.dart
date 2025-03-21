@@ -176,7 +176,7 @@ class _HomeWidgetState extends State<HomeWidget> {
       ),
       floatingActionButton: _isScanning 
         ? FloatingActionButton(
-            backgroundColor: Color(0xFF00122D),
+            backgroundColor: const Color(0xFF00122D),
             onPressed: () {
               setState(() {
                 _isScanning = false;
@@ -185,7 +185,7 @@ class _HomeWidgetState extends State<HomeWidget> {
             child: const Icon(Icons.close, color: Colors.white),
           )
         : FloatingActionButton.extended(
-            backgroundColor: Color(0xFF00122D),
+            backgroundColor: const Color(0xFF00122D),
             onPressed: () {
               setState(() {
                 _isScanning = true;
@@ -208,12 +208,12 @@ class _HomeWidgetState extends State<HomeWidget> {
           size: 80,
           color: Colors.white,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         const Text(
           'Transaction Verification',
           style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 40),
           child: Text(
@@ -262,8 +262,8 @@ class _HomeWidgetState extends State<HomeWidget> {
           ),
         ),
         Container(
-          padding: EdgeInsets.all(20),
-          child: Text(
+          padding: const EdgeInsets.all(20),
+          child: const Text(
             'Position the QR code within the scanner frame',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white, fontSize: 16),
@@ -279,7 +279,7 @@ class _HomeWidgetState extends State<HomeWidget> {
     return Center(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.9,
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -299,7 +299,7 @@ class _HomeWidgetState extends State<HomeWidget> {
               size: 72,
               color: _verificationSuccess ? Colors.green : Colors.red,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               _verificationSuccess ? 'Transaction Verified' : 'Verification Failed',
               style: TextStyle(
@@ -308,30 +308,30 @@ class _HomeWidgetState extends State<HomeWidget> {
                 color: _verificationSuccess ? Colors.green : Colors.red,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             if (hasError) ...[
               Text(
                 _transactionData!['error'],
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
             ] else ...[
               _buildTransactionDetails(),
             ],
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
                 setState(() {
                   _transactionData = null;
                 });
               },
-              child: Text('Done'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF00122D),
+                backgroundColor: const Color(0xFF00122D),
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
+              child: const Text('Done'),
             ),
           ],
         ),
@@ -348,10 +348,10 @@ class _HomeWidgetState extends State<HomeWidget> {
         _buildDetailRow('Date', _formatDate(_transactionData!['timestamp'])),
         _buildDetailRow('Customer', _transactionData!['customerName'] ?? _transactionData!['userName'] ?? 'N/A'),
         if (_verificationSuccess) ...[
-          Divider(height: 30),
+          const Divider(height: 30),
           Text(
             'Successfully verified at ${_formatTime(DateTime.now().toString())}',
-            style: TextStyle(color: Colors.green, fontStyle: FontStyle.italic),
+            style: const TextStyle(color: Colors.green, fontStyle: FontStyle.italic),
           ),
         ],
       ],
@@ -375,7 +375,7 @@ class _HomeWidgetState extends State<HomeWidget> {
           Flexible(
             child: Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black87,
               ),

@@ -45,28 +45,6 @@ class _ProfilePageState extends State<ProfilePage> {
     print("ImgBB API Key loaded: ${_imgbbApiKey.isNotEmpty ? 'Yes (${_imgbbApiKey.substring(0, min(3, _imgbbApiKey.length))}...)' : 'No'}");
     
     _loadUserData();
-    _testImgBBApiKey(); // Test if the API key is valid
-  }
-
-  // Test if the ImgBB API key is valid
-  Future<void> _testImgBBApiKey() async {
-    try {
-      print("Testing ImgBB API key...");
-      final response = await http.get(
-        Uri.parse('https://api.imgbb.com/1/upload?key=$_imgbbApiKey'),
-      );
-      
-      print("ImgBB API test status code: ${response.statusCode}");
-      
-      // A valid key should return a 400 error asking for an image
-      if (response.statusCode == 400 && response.body.contains("image")) {
-        print("✓ API key appears to be valid (expected 400 error about missing image)");
-      } else {
-        print("✗ API key appears to be invalid - Response: ${response.body.substring(0, min(100, response.body.length))}");
-      }
-    } catch (e) {
-      print("Error testing API key: $e");
-    }
   }
 
   Future<void> _loadUserData() async {
@@ -204,17 +182,6 @@ class _ProfilePageState extends State<ProfilePage> {
       
       final jsonData = json.decode(response.body);
       
-      // Detailed logging of the response structure
-      print("ImgBB Response Structure:");
-      jsonData.keys.forEach((key) {
-        print("- $key: ${jsonData[key]}");
-        if (key == 'data' && jsonData[key] is Map) {
-          (jsonData[key] as Map).keys.forEach((dataKey) {
-            print("  - $dataKey: ${jsonData[key][dataKey]}");
-          });
-        }
-      });
-      
       // Check if upload was successful
       if (jsonData['success'] == true) {
         final String imageUrl = jsonData['data']['url'];
@@ -335,59 +302,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Function to test ImgBB API directly with hardcoded key (for debugging)
-  Future<void> _testDirectApiUpload() async {
-    setState(() {
-      _isLoading = true;
-    });
-    
-    try {
-      if (_imageFile == null) {
-        _showErrorSnackBar('Please select an image first');
-        return;
-      }
-      
-      // Read file as bytes
-      final bytes = await _imageFile!.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      
-      // Try direct upload
-      final directKey = _imgbbApiKey; // Use your API key from .env
-      
-      print("Testing direct upload with key: ${directKey.substring(0, min(5, directKey.length))}...");
-      
-      final response = await http.post(
-        Uri.parse('https://api.imgbb.com/1/upload'),
-        body: {
-          'key': directKey,
-          'image': base64Image,
-        },
-      );
-      
-      print("Direct test response: ${response.statusCode}");
-      print("Direct test body: ${response.body}");
-      
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        if (jsonData['success'] == true) {
-          final imageUrl = jsonData['data']['url'];
-          _showErrorSnackBar('Test successful! URL: ${imageUrl.substring(0, min<int>(20, imageUrl.length))}...', isError: false);
-        } else {
-          _showErrorSnackBar('Test failed: ${jsonData['error']['message']}');
-        }
-      } else {
-        _showErrorSnackBar('Test failed with status ${response.statusCode}');
-      }
-    } catch (e) {
-      print("Test error: $e");
-      _showErrorSnackBar('Test error: ${e.toString()}');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   void _showErrorSnackBar(String message, {bool isError = true}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -461,57 +375,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             _buildProfileSection(),
                             const SizedBox(height: 20),
                             _buildDetailsCard(),
-                            // Debug section
-                            _buildDebugSection(),
                           ],
                         ),
                       ),
                     ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildDebugSection() {
-    // Only show in debug mode - remove in production
-    return Container(
-      margin: const EdgeInsets.only(top: 20),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Debug Options",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          if (_profileImageUrl != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Current Image URL:", 
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text(_profileImageUrl!,
-                    style: const TextStyle(color: Colors.white60, fontSize: 10),
-                    softWrap: true),
-                ],
-              ),
-            ),
-          ElevatedButton(
-            onPressed: _testDirectApiUpload,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
-              minimumSize: const Size(double.infinity, 40),
-            ),
-            child: const Text("Test Direct Upload"),
-          ),
-        ],
       ),
     );
   }
