@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:orderq/Students/signupwithcredentials.dart';
 import 'package:orderq/pages/loginpage.dart';
+import 'package:orderq/pages/studenthome/order.dart';
 
 import 'pages/loading.dart';
 
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/loginPage': (context) => const LoginPage(),
         '/signupPage': (context) => const SignupWithCredentials(),
+        '/ordersPage': (context) => const Orders(),
       },
     );
   }

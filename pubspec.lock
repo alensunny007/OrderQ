@@ -326,6 +326,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  flutter_localizations:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -460,10 +465,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
+      sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
       url: "https://pub.dev"
     source: hosted
-    version: "0.20.2"
+    version: "0.19.0"
   json_annotation:
     dependency: transitive
     description:
@@ -600,6 +605,38 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+  pay:
+    dependency: "direct main"
+    description:
+      name: pay
+      sha256: "83b15697797f8013bd7693193b9f657bacfe40c5d0a31d4e084caed5fe22d29c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.1"
+  pay_android:
+    dependency: transitive
+    description:
+      name: pay_android
+      sha256: d3e7d72e8be7f65dd8f0d3fd36a7c0357d94b504163b7dd6eed5e99f6f32405d
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
+  pay_ios:
+    dependency: transitive
+    description:
+      name: pay_ios
+      sha256: ca4a7a12b4396b1205f314bebbc92e5268c627b65e5e6b3ab30efc2326da0a28
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  pay_platform_interface:
+    dependency: transitive
+    description:
+      name: pay_platform_interface
+      sha256: "39a9f5fa4bafc59ce103bd5e84a6362113c6e58c361aed8dde9494b182fac400"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   petitparser:
     dependency: transitive
     description:

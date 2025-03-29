@@ -312,73 +312,89 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Safe navigation method that handles possible navigation issues
+  void _navigateBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      // If there's nothing to pop, navigate to the home route
+      Navigator.of(context).pushReplacementNamed('/home');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          "Profile",
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return WillPopScope(
+      onWillPop: () async {
+        _navigateBack();
+        return false; // Prevent default back behavior
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: _navigateBack,
+          ),
+          title: const Text(
+            "Profile",
+            style: TextStyle(color: Colors.white),
           ),
         ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                )
-              : _errorMessage != null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: _loadUserData,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF53E3C6),
-                            ),
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+        extendBodyBehindAppBar: true,
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF53E3C6), Color(0xFF00122D)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SafeArea(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                  )
+                : _errorMessage != null
+                    ? Center(
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
                             const SizedBox(height: 20),
-                            _buildProfileSection(),
-                            const SizedBox(height: 20),
-                            _buildDetailsCard(),
+                            ElevatedButton(
+                              onPressed: _loadUserData,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF53E3C6),
+                              ),
+                              child: const Text('Retry'),
+                            ),
                           ],
                         ),
+                      )
+                    : SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 20),
+                              _buildProfileSection(),
+                              const SizedBox(height: 20),
+                              _buildDetailsCard(),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+          ),
         ),
       ),
     );

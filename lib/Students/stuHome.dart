@@ -141,7 +141,7 @@ class _StuHomePageState extends State<StuHomePage> {
       _filteredItems = menuItems; // Set filtered items to all items initially
       
       // Update _isInCart length to match availableItems
-      _isInCart = List.generate(availableItems.length, (_) => false);
+      _isInCart = List.generate(availableItems.length, (index) => false);
       
       // Important: Check cart status for the newly loaded items
       _updateCartStatesAfterMenuLoad();
@@ -271,8 +271,8 @@ void _setupCartListener() {
     
     setState(() {
       // Reset cart states for both canteen and cafeteria
-      _cartStates['canteen'] = List.generate(availableItems.length, (_) => false);
-      _cartStates['cafeteria'] = List.generate(availableItems.length, (_) => false);
+      _cartStates['canteen'] = List.generate(availableItems.length, (index) => false);
+      _cartStates['cafeteria'] = List.generate(availableItems.length, (index) => false);
 
       // Iterate through available items and check if they're in the cart
       for (int i = 0; i < availableItems.length; i++) {
@@ -297,7 +297,7 @@ void _setupCartListener() {
           _cartStates[source]!.length == availableItems.length) {
         _isInCart = List.from(_cartStates[source]!);
       } else {
-        _isInCart = List.generate(availableItems.length, (_) => false);
+        _isInCart = List.generate(availableItems.length, (index) => false);
       }
     });
   });
@@ -595,6 +595,17 @@ void _setupCartListener() {
                             ],
                           ),
                         ),
+                        IconButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/ordersPage');
+                        },
+                        icon: const Icon(
+                          Icons.receipt_long,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        tooltip: 'My Orders',
+                      ),
                         IconButton(
                           onPressed: () {
                             showDialog(
