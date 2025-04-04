@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:orderq/utils/cafeteria_data.dart';
 import 'package:orderq/utils/food_data.dart';
 
-
 class DailyMenuService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -93,4 +92,34 @@ class DailyMenuService {
       return [];
     }
   }
+
+  Future<Set<String>> getDirectAvailableItems(String source, DateTime date) async {
+  try {
+    // Format date to match how it's stored in other methods
+    final dateStr = DateTime(date.year, date.month, date.day).toIso8601String();
+
+    print('Checking dailyMenu for date: $dateStr, source: $source');
+
+    // Query the dailyMenu collection to match the structure used elsewhere
+    final snapshot = await _firestore
+        .collection('dailyMenu')  // Changed from 'dailMenu'
+        .where('type', isEqualTo: source.toLowerCase())
+        .where('date', isEqualTo: dateStr)
+        .where('isAvailable', isEqualTo: true)
+        .get();
+
+    print('Found ${snapshot.docs.length} items in dailyMenu');
+
+    // Extract the foodIds instead of document IDs
+    final ids = snapshot.docs
+        .map((doc) => doc.data()['foodId'] as String)
+        .toSet();
+    
+    print('Available IDs: $ids');
+    return ids;
+  } catch (e) {
+    print('Error fetching daily menu: $e');
+    return {};
+  }
+}
 }

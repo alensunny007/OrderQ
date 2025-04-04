@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:orderq/pages/studenthome/payment.dart'; 
-
+import 'package:orderq/pages/studenthome/payment.dart';
+import 'package:orderq/services/daily_menu_service.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -12,9 +12,11 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  final DailyMenuService _menuService = DailyMenuService();
+  bool _checkingAvailability = false;
+
   @override
   Widget build(BuildContext context) {
-    // Main build method remains unchanged
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return const Center(child: Text('Please login'));
 
@@ -140,12 +142,14 @@ class _CartPageState extends State<CartPage> {
                             child: Row(
                               children: [
                                 IconButton(
-                                  icon: Icon(Icons.remove, color: Colors.white70),
+                                  icon:
+                                      Icon(Icons.remove, color: Colors.white70),
                                   onPressed: () => _updateQuantity(userId,
                                       item['docId'], item['quantity'] - 1),
                                 ),
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(4),
@@ -191,29 +195,35 @@ class _CartPageState extends State<CartPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      ElevatedButton(
-                        // Modified to navigate to PaymentPage instead of showing bottom sheet
-                        onPressed: () => _navigateToPaymentPage(context, total, userId, items),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF53E3C6),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 4,
-                        ),
-                        child: const Text(
-                          'Checkout',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
+                      _checkingAvailability
+                          ? const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF53E3C6)),
+                              strokeWidth: 3,
+                            )
+                          : ElevatedButton(
+                              onPressed: () => _checkAvailabilityAndProceed(
+                                  context, total, userId, items),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF53E3C6),
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 4,
+                              ),
+                              child: const Text(
+                                'Checkout',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -225,8 +235,147 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  // Method to navigate to the PaymentPage
-  void _navigateToPaymentPage(BuildContext context, double total, String userId, 
+  Future<void> _checkAvailabilityAndProceed(BuildContext context, double total,
+      String userId, List<Map<String, dynamic>> items) async {
+    setState(() {
+      _checkingAvailability = true;
+    });
+
+    try {
+      // Group items by source
+      Map<String, List<String>> itemsBySource = {};
+
+      for (var item in items) {
+        final source = item['source'] as String? ?? 'canteen';
+        String id = item['id'] as String? ?? '';
+
+        if (id.isNotEmpty) {
+          if (!itemsBySource.containsKey(source)) {
+            itemsBySource[source] = [];
+          }
+
+          // Extract the actual item ID (after the source prefix)
+          if (id.contains('_')) {
+            id = id.split('_').last;
+          }
+
+          itemsBySource[source]!.add(id);
+        }
+      }
+
+      List<String> unavailableItems = [];
+      DateTime today = DateTime.now();
+      today = DateTime(today.year, today.month, today.day);
+
+      // Debug information
+      print('Checking availability for items: $itemsBySource');
+
+      // Check availability directly against the dailMenu collection
+      for (var source in itemsBySource.keys) {
+        final availableIds =
+            await _menuService.getDirectAvailableItems(source, today);
+        print('Available $source items: $availableIds');
+
+        for (var itemId in itemsBySource[source]!) {
+          print('Checking item: $itemId in $source');
+
+          if (!availableIds.contains(itemId)) {
+            // Find the original item with full data
+            final originalItemId = '${source}_$itemId';
+            final itemInfo = items.firstWhere(
+                (item) => item['id'] == originalItemId,
+                orElse: () => {'title': 'Unknown item ($itemId)'});
+
+            unavailableItems
+                .add(itemInfo['title'] as String? ?? 'Unknown item');
+            print('Item $itemId (${itemInfo['title']}) is unavailable');
+          }
+        }
+      }
+
+      setState(() {
+        _checkingAvailability = false;
+      });
+
+      if (unavailableItems.isEmpty) {
+        print('All items available, proceeding to payment');
+        _navigateToPaymentPage(context, total, userId, items);
+      } else {
+        print('Some items unavailable: $unavailableItems');
+        _showUnavailableItemsDialog(context, unavailableItems);
+      }
+    } catch (e) {
+      print('Error in availability check: ${e.toString()}');
+      setState(() {
+        _checkingAvailability = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error checking menu availability: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showUnavailableItemsDialog(
+      BuildContext context, List<String> unavailableItems) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF001736),
+        title: const Text(
+          'Unavailable Items',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'The following items are not available in today\'s menu:',
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            ...unavailableItems.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.amber, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+            const SizedBox(height: 12),
+            const Text(
+              'Please remove these items from your cart to proceed.',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ],
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
+              style: TextStyle(color: Color(0xFF53E3C6)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToPaymentPage(BuildContext context, double total, String userId,
       List<Map<String, dynamic>> items) {
     Navigator.push(
       context,
@@ -243,7 +392,6 @@ class _CartPageState extends State<CartPage> {
   Future<void> _updateQuantity(
       String userId, String itemId, int newQuantity) async {
     if (newQuantity < 1) {
-      // Remove item if quantity becomes 0
       await _removeFromCart(userId, itemId);
     } else {
       await FirebaseFirestore.instance

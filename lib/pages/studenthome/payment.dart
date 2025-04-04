@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:uuid/uuid.dart'; 
 
 class PaymentPage extends StatefulWidget {
   final String userId;
@@ -50,14 +51,14 @@ class _PaymentPageState extends State<PaymentPage> {
                 children: [
                   // Order Summary Card
                   Card(
-                    color: Color(0xFF001736),
+                    color: const Color(0xFF001736),
                     elevation: 4,
                     shadowColor: Colors.black.withOpacity(0.2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -73,18 +74,18 @@ class _PaymentPageState extends State<PaymentPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Items', style: TextStyle(color: Colors.white70)),
-                              Text('${widget.items.length}', style: TextStyle(color: Colors.white)),
+                              const Text('Items', style: TextStyle(color: Colors.white70)),
+                              Text('${widget.items.length}', style: const TextStyle(color: Colors.white)),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Total', style: TextStyle(color: Colors.white70)),
+                              const Text('Total', style: TextStyle(color: Colors.white70)),
                               Text(
                                 '₹${widget.total.toStringAsFixed(2)}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Color(0xFF53E3C6),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -119,7 +120,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         'Google Pay',
                         'assets/images/google-pay.png',
                         Icons.account_balance_wallet,
-                        () => _launchSpecificUpiApp(
+                        () => _launchUpiPayment(
                           context, 
                           'gpay', 
                           widget.total, 
@@ -131,7 +132,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         'PhonePe',
                         'assets/images/phonepe.png',
                         Icons.phone_android,
-                        () => _launchSpecificUpiApp(
+                        () => _launchUpiPayment(
                           context, 
                           'phonepe', 
                           widget.total, 
@@ -143,7 +144,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         'Paytm',
                         'assets/images/paytm.png',
                         Icons.payment,
-                        () => _launchSpecificUpiApp(
+                        () => _launchUpiPayment(
                           context, 
                           'paytm', 
                           widget.total, 
@@ -152,6 +153,31 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 20),
+                  
+                  // Generic UPI Option
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _launchUpiPayment(
+                        context, 
+                        'generic', 
+                        widget.total, 
+                        widget.userId, 
+                        widget.items
+                      ),
+                      icon: const Icon(Icons.payment, color: Color(0xFF53E3C6)),
+                      label: const Text('Other UPI Apps'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF53E3C6),
+                        side: const BorderSide(color: Color(0xFF53E3C6)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
                   ),
                   
                   const Spacer(),
@@ -162,13 +188,13 @@ class _PaymentPageState extends State<PaymentPage> {
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.teal,
-                        side: BorderSide(color: Colors.white24),
+                        side: const BorderSide(color: Colors.white24),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                       ),
-                      child: Text('Cancel Payment'),
+                      child: const Text('Cancel Payment'),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -184,7 +210,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  color: Color(0xFF001736),
+                  color: const Color(0xFF001736),
                   child: const Padding(
                     padding: EdgeInsets.all(20.0),
                     child: Column(
@@ -231,19 +257,19 @@ class _PaymentPageState extends State<PaymentPage> {
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
                   blurRadius: 8,
-                  offset: Offset(0, 3),
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Padding(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 child: Image.asset(
                   imagePath,
-                  width: 74, // Container width (90) - padding (8*2)
-                  height: 74, // Container height (90) - padding (8*2)
-                  fit: BoxFit.contain, // This ensures the image fits while maintaining aspect ratio
+                  width: 74,
+                  height: 74,
+                  fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Icon(
                     fallbackIcon,
                     size: 45,
@@ -263,43 +289,73 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  // Method to launch a specific UPI app directly
-  Future<void> _launchSpecificUpiApp(BuildContext context, String appName,
+  // Simplified UPI payment launcher
+  Future<void> _launchUpiPayment(BuildContext context, String appName,
       double amount, String userId, List<Map<String, dynamic>> items) async {
     setState(() {
       isProcessingPayment = true;
     });
 
     try {
-      // Generate a unique transaction reference ID
-      String orderId = 'ORD${DateTime.now().millisecondsSinceEpoch}';
+      // Generate a UPI-compatible transaction ID (alphanumeric only, no special chars)
+      // Use uuid to generate a unique ID and take first 12 characters
+      final uuid = Uuid();
+      String txnId = uuid.v4().replaceAll('-', '').substring(0, 12);
+      String orderId = 'ORD$txnId';
 
       // Create order in Firestore first (pending status)
       await _createPendingOrder(userId, orderId, items, amount);
 
-      // Payment details
-      final upiDetails = {
-        'upiId': 'athuldevaraj1@oksbi', // Replace with your UPI ID
-        'name': 'Food Order',
-        'amount': amount.toStringAsFixed(2),
-        'transactionRef': orderId,
-        'note': 'Payment for food order #$orderId',
-      };
+      // Format amount without trailing zeros if whole number
+      final formattedAmount = amount == amount.roundToDouble() 
+          ? amount.round().toString() 
+          : amount.toStringAsFixed(2);
 
-      // Attempt to launch the specific UPI app
-      bool launched = false;
+      // Merchant name - keep it short and simple
+      final merchantName = "FoodOrder";
       
-      if (appName == 'gpay') {
-        launched = await _launchGooglePay(upiDetails);
-      } else if (appName == 'phonepe') {
-        launched = await _launchPhonePe(upiDetails);
-      } else if (appName == 'paytm') {
-        launched = await _launchPaytm(upiDetails);
-      }
+      // UPI ID - ensure this is a valid and working UPI ID
+      final upiId = "aasifabdullahtk@oksbi";
+      
+      // Simple description with less characters
+      final note = "Food#$txnId";
 
+      // Prepare URL based on app
+      Uri upiUrl;
+      
+      switch(appName) {
+        case 'gpay':
+          upiUrl = Uri.parse(
+            'tez://upi/pay?pa=$upiId&pn=$merchantName&am=$formattedAmount&cu=INR&tn=$note&tr=$txnId'
+          );
+          break;
+        case 'phonepe':
+          upiUrl = Uri.parse(
+            'phonepe://pay?pa=$upiId&pn=$merchantName&am=$formattedAmount&cu=INR&tn=$note&tr=$txnId'
+          );
+          break;
+        case 'paytm':
+          upiUrl = Uri.parse(
+            'paytmmp://pay?pa=$upiId&pn=$merchantName&am=$formattedAmount&cu=INR&tn=$note&tr=$txnId'
+          );
+          break;
+        case 'generic':
+        default:
+          upiUrl = Uri.parse(
+            'upi://pay?pa=$upiId&pn=$merchantName&am=$formattedAmount&cu=INR&tn=$note&tr=$txnId'
+          );
+      }
+      
+      // Launch the URL
+      final launched = await launchUrl(
+        upiUrl,
+        mode: LaunchMode.externalApplication,
+      );
+
+      // Handle result
       if (launched) {
-        // Wait a bit for user to complete payment process
-        await Future.delayed(Duration(seconds: 2));
+        // Allow some time for payment process
+        await Future.delayed(const Duration(seconds: 2));
         
         if (mounted) {
           setState(() {
@@ -309,20 +365,30 @@ class _PaymentPageState extends State<PaymentPage> {
           _confirmPaymentStatus(context, orderId, userId);
         }
       } else {
-        // App not found - show error
+        // Try generic UPI if specific app failed
+        if (appName != 'generic') {
+          setState(() {
+            isProcessingPayment = false;
+          });
+          
+          // Try generic UPI intent instead
+          _launchUpiPayment(context, 'generic', amount, userId, items);
+          return;
+        }
+        
+        // All attempts failed
         setState(() {
           isProcessingPayment = false;
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Selected payment app not installed'),
+          const SnackBar(
+            content: Text('Unable to launch payment app. Please ensure you have a UPI app installed.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
         );
         
-        // Update order status to failed
         await _updateOrderStatus(userId, orderId, 'failed');
       }
     } catch (e) {
@@ -334,99 +400,11 @@ class _PaymentPageState extends State<PaymentPage> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment failed. Please try again.'),
+          content: Text('Payment error: ${e.toString().length > 100 ? e.toString().substring(0, 100) : e.toString()}'),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
-    }
-  }
-
-  // Launch Google Pay app directly
-  Future<bool> _launchGooglePay(Map<String, String> upiDetails) async {
-    try {
-      // Google Pay specific intent URL
-      final intentUrl = Uri.parse(
-        'tez://upi/pay?pa=${upiDetails['upiId']}'
-        '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
-        '&am=${upiDetails['amount']}'
-        '&cu=INR'
-        '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
-        '&tr=${upiDetails['transactionRef']}'
-      );
-      
-      return await launchUrl(
-        intentUrl,
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (e) {
-      print('Google Pay launch error: $e');
-      return false;
-    }
-  }
-
-  // Launch PhonePe app directly
-  Future<bool> _launchPhonePe(Map<String, String> upiDetails) async {
-    try {
-      // PhonePe specific intent URL
-      final intentUrl = Uri.parse(
-        'phonepe://pay?pa=${upiDetails['upiId']}'
-        '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
-        '&am=${upiDetails['amount']}'
-        '&cu=INR'
-        '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
-        '&tr=${upiDetails['transactionRef']}'
-      );
-      
-      return await launchUrl(
-        intentUrl,
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (e) {
-      print('PhonePe launch error: $e');
-      return false;
-    }
-  }
-
-  // Launch Paytm app directly
-  Future<bool> _launchPaytm(Map<String, String> upiDetails) async {
-    try {
-      // Paytm specific intent URL
-      final intentUrl = Uri.parse(
-        'paytmmp://pay?pa=${upiDetails['upiId']}'
-        '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
-        '&am=${upiDetails['amount']}'
-        '&cu=INR'
-        '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
-        '&tr=${upiDetails['transactionRef']}'
-      );
-      
-      return await launchUrl(
-        intentUrl,
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (e) {
-      print('Paytm launch error: $e');
-      
-      // Try alternate Paytm UPI URL
-      try {
-        final alternateUrl = Uri.parse(
-          'paytm://upi/pay?pa=${upiDetails['upiId']}'
-          '&pn=${Uri.encodeComponent(upiDetails['name']!)}'
-          '&am=${upiDetails['amount']}'
-          '&cu=INR'
-          '&tn=${Uri.encodeComponent(upiDetails['note']!)}'
-          '&tr=${upiDetails['transactionRef']}'
-        );
-        
-        return await launchUrl(
-          alternateUrl,
-          mode: LaunchMode.externalApplication,
-        );
-      } catch (e2) {
-        print('Alternate Paytm launch error: $e2');
-        return false;
-      }
     }
   }
 
@@ -481,12 +459,12 @@ class _PaymentPageState extends State<PaymentPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF001736),
-        title: Text(
+        backgroundColor: const Color(0xFF001736),
+        title: const Text(
           'Payment Status',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        content: Text(
+        content: const Text(
           'Did you complete the payment successfully?',
           style: TextStyle(color: Colors.white70),
         ),
@@ -498,13 +476,13 @@ class _PaymentPageState extends State<PaymentPage> {
               await _updateOrderStatus(userId, orderId, 'failed');
               
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
+                const SnackBar(
                   content: Text('Payment cancelled. You can try again later.'),
                   backgroundColor: Colors.orange,
                 ),
               );
             },
-            child: Text(
+            child: const Text(
               'No',
               style: TextStyle(color: Colors.white70),
             ),
@@ -521,7 +499,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            child: Text(
+            child: const Text(
               'Yes',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -541,7 +519,7 @@ class _PaymentPageState extends State<PaymentPage> {
       
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Order placed successfully!'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
@@ -550,18 +528,10 @@ class _PaymentPageState extends State<PaymentPage> {
       
       // Navigate back to home or order confirmation page
       Navigator.of(context).popUntil((route) => route.isFirst);
-      
-      // Alternatively, navigate to order tracking page:
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(
-      //     builder: (context) => OrderConfirmationPage(orderId: orderId),
-      //   ),
-      // );
     } catch (e) {
       print('Error finalizing order: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Error processing order. Please contact support.'),
           backgroundColor: Colors.red,
         ),

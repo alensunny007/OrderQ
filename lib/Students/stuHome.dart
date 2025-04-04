@@ -6,8 +6,7 @@ import 'package:orderq/pages/profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../services/daily_menu_service.dart';
+import 'package:orderq/services/daily_menu_service.dart';
 
 class StuHomePage extends StatefulWidget {
   final dynamic userId;
@@ -22,7 +21,7 @@ class _StuHomePageState extends State<StuHomePage> {
   int _selectedIndex = 0;
   String selectedOption = 'Canteen';
   final PageController _pageController = PageController();
-  List<bool> _isInCart = [];  // Initialize as empty list
+  List<bool> _isInCart = [];
   final Map<String, bool> _favoriteStates = {};
   final DailyMenuService _menuService = DailyMenuService();
   List<Map<String, dynamic>> availableItems = [];
@@ -33,29 +32,32 @@ class _StuHomePageState extends State<StuHomePage> {
     'canteen': [],
     'cafeteria': [],
   };
-  
-  // Add variables for user data
-  String name = "User"; // Default value
-  bool _isLoadingUserData = false; // Start with false to prevent initial loading
-  String? _profileImageUrl; // Add this for profile image URL
-  bool _isLoadingProfileImage = false; // Add loading state for profile image
 
-  // Add search-related variables
+  // User data variables
+  String name = "User";
+  bool _isLoadingUserData = false;
+  String? _profileImageUrl;
+  bool _isLoadingProfileImage = false;
+
+  // Search variables
   Timer? _searchDebounce;
   String _searchQuery = '';
   List<Map<String, dynamic>> _filteredItems = [];
   final TextEditingController _searchController = TextEditingController();
 
+  // 3D Card Touch Effect Variables
+  final Map<int, Offset> _cardTouchPositions = {};
+  final Map<int, bool> _cardsBeingTouched = {};
+
   @override
   void initState() {
     super.initState();
-    // Set loading to true right before fetching
     setState(() {
       _isLoadingUserData = true;
       _isLoadingProfileImage = true;
-      _filteredItems = []; // Initialize as empty
+      _filteredItems = [];
     });
-    _loadUserData(); // Add this method call to fetch user data
+    _loadUserData();
     _loadDailyMenu();
     _setupFavoritesListener();
     _setupCartListener();
@@ -69,29 +71,24 @@ class _StuHomePageState extends State<StuHomePage> {
     _searchController.dispose();
     super.dispose();
   }
-  
-  // Method to load user data from Firestore
+
   Future<void> _loadUserData() async {
-    // Set a timeout to prevent infinite loading
     Future.delayed(const Duration(seconds: 3), () {
       if (_isLoadingUserData) {
         setState(() {
           _isLoadingUserData = false;
           _isLoadingProfileImage = false;
-          // If loading takes too long, use the default name
         });
       }
     });
     
     try {
-      // Fetch user document from Firestore
       DocumentSnapshot userDoc = await _firestore
           .collection('users')
           .doc(widget.userId)
           .get();
       
       if (userDoc.exists) {
-        // Extract data from the document
         Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
         
         if (userData != null) {
@@ -100,10 +97,8 @@ class _StuHomePageState extends State<StuHomePage> {
               name = userData['name'];
             }
             
-            // Get profile image URL if it exists
             if (userData.containsKey('profileImageUrl')) {
               _profileImageUrl = userData['profileImageUrl'];
-              print("Loaded profile image URL: $_profileImageUrl");
             }
             
             _isLoadingUserData = false;
@@ -113,7 +108,6 @@ class _StuHomePageState extends State<StuHomePage> {
           setState(() {
             _isLoadingUserData = false;
             _isLoadingProfileImage = false;
-            // Keep default name if 'name' field doesn't exist
           });
         }
       } else {
@@ -131,92 +125,78 @@ class _StuHomePageState extends State<StuHomePage> {
     }
   }
 
- Future<void> _loadDailyMenu() async {
-  try {
-    final menuItems = await _menuService.getDailyMenuItems(
-        selectedOption.toLowerCase(), DateTime.now());
+  Future<void> _loadDailyMenu() async {
+    try {
+      final menuItems = await _menuService.getDailyMenuItems(
+          selectedOption.toLowerCase(), DateTime.now());
 
-    setState(() {
-      availableItems = menuItems;
-      _filteredItems = menuItems; // Set filtered items to all items initially
-      
-      // Update _isInCart length to match availableItems
-      _isInCart = List.generate(availableItems.length, (index) => false);
-      
-      // Important: Check cart status for the newly loaded items
-      _updateCartStatesAfterMenuLoad();
-    });
-  } catch (e) {
-    print('Error loading daily menu: $e');
-    setState(() {
-      availableItems = [];
-      _filteredItems = []; // Also clear filtered items
-      _isInCart = []; // Clear the list when there are no items
-    });
-  }
-}
-
-void _updateCartStatesAfterMenuLoad() async {
-  try {
-    // Get all cart items from Firestore
-    final cartSnapshot = await _firestore
-        .collection('users')
-        .doc(widget.userId)
-        .collection('cart')
-        .get();
-    
-    // Create a set of item IDs that are in the cart
-    Set<String> cartItemIds = {};
-    for (var doc in cartSnapshot.docs) {
-      final data = doc.data();
-      final itemId = data['id'] as String;
-      cartItemIds.add(itemId);
+      setState(() {
+        availableItems = menuItems;
+        _filteredItems = menuItems;
+        _isInCart = List.generate(availableItems.length, (index) => false);
+        _updateCartStatesAfterMenuLoad();
+      });
+    } catch (e) {
+      print('Error loading daily menu: $e');
+      setState(() {
+        availableItems = [];
+        _filteredItems = [];
+        _isInCart = [];
+      });
     }
-    
-    // Check each available item against the cart items
-    String source = selectedOption.toLowerCase();
-    List<bool> newCartState = List.generate(availableItems.length, (_) => false);
-    
-    for (int i = 0; i < availableItems.length; i++) {
-      final item = availableItems[i];
-      final itemId = '${source}_${item['id']}';
-      
-      if (cartItemIds.contains(itemId)) {
-        newCartState[i] = true;
-      }
-    }
-    
-    // Update cart states
-    setState(() {
-      if (_cartStates.containsKey(source)) {
-        _cartStates[source] = newCartState;
-      }
-      _isInCart = List.from(newCartState);
-    });
-  } catch (e) {
-    print('Error updating cart states after menu load: $e');
   }
-}
 
-  // Method for delayed search
+  void _updateCartStatesAfterMenuLoad() async {
+    try {
+      final cartSnapshot = await _firestore
+          .collection('users')
+          .doc(widget.userId)
+          .collection('cart')
+          .get();
+      
+      Set<String> cartItemIds = {};
+      for (var doc in cartSnapshot.docs) {
+        final data = doc.data();
+        final itemId = data['id'] as String;
+        cartItemIds.add(itemId);
+      }
+      
+      String source = selectedOption.toLowerCase();
+      List<bool> newCartState = List.generate(availableItems.length, (_) => false);
+      
+      for (int i = 0; i < availableItems.length; i++) {
+        final item = availableItems[i];
+        final itemId = '${source}_${item['id']}';
+        
+        if (cartItemIds.contains(itemId)) {
+          newCartState[i] = true;
+        }
+      }
+      
+      setState(() {
+        if (_cartStates.containsKey(source)) {
+          _cartStates[source] = newCartState;
+        }
+        _isInCart = List.from(newCartState);
+      });
+    } catch (e) {
+      print('Error updating cart states after menu load: $e');
+    }
+  }
+
   void _onSearchChanged(String query) {
-    // Cancel any previous timer
     if (_searchDebounce?.isActive ?? false) {
       _searchDebounce!.cancel();
     }
 
-    // Update search query immediately
     setState(() {
       _searchQuery = query;
     });
 
-    // Set a timer for 500ms
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-      // Only search if query is not empty
       if (_searchQuery.isNotEmpty) {
         _searchItems(_searchQuery);
       } else {
-        // If query is empty, show all items
         setState(() {
           _filteredItems = availableItems;
         });
@@ -224,7 +204,6 @@ void _updateCartStatesAfterMenuLoad() async {
     });
   }
 
-  // Method to filter items based on search query
   void _searchItems(String query) {
     setState(() {
       _filteredItems = availableItems.where((item) {
@@ -251,57 +230,48 @@ void _updateCartStatesAfterMenuLoad() async {
     });
   }
 
- 
-void _setupCartListener() {
-  _cartSubscription = _firestore
-      .collection('users')
-      .doc(widget.userId)
-      .collection('cart')
-      .snapshots()
-      .listen((snapshot) {
-    // Create a set of item IDs that are in the cart
-    Set<String> cartItemIds = {};
-    
-    // Add all cart item IDs to the set
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final itemId = data['id'] as String;
-      cartItemIds.add(itemId);
-    }
-    
-    setState(() {
-      // Reset cart states for both canteen and cafeteria
-      _cartStates['canteen'] = List.generate(availableItems.length, (index) => false);
-      _cartStates['cafeteria'] = List.generate(availableItems.length, (index) => false);
+  void _setupCartListener() {
+    _cartSubscription = _firestore
+        .collection('users')
+        .doc(widget.userId)
+        .collection('cart')
+        .snapshots()
+        .listen((snapshot) {
+      Set<String> cartItemIds = {};
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final itemId = data['id'] as String;
+        cartItemIds.add(itemId);
+      }
+      
+      setState(() {
+        _cartStates['canteen'] = List.generate(availableItems.length, (index) => false);
+        _cartStates['cafeteria'] = List.generate(availableItems.length, (index) => false);
 
-      // Iterate through available items and check if they're in the cart
-      for (int i = 0; i < availableItems.length; i++) {
-        // Create the item ID in the same format as stored in Firestore
-        final item = availableItems[i];
-        final source = selectedOption.toLowerCase();
-        final itemId = '${source}_${item['id']}';
-        
-        // Check if this item ID is in our set of cart items
-        if (cartItemIds.contains(itemId)) {
-          // Item is in cart, update its state
-          if (i < _cartStates[source]!.length) {
-            _cartStates[source]![i] = true;
+        for (int i = 0; i < availableItems.length; i++) {
+          final item = availableItems[i];
+          final source = selectedOption.toLowerCase();
+          final itemId = '${source}_${item['id']}';
+          
+          if (cartItemIds.contains(itemId)) {
+            if (i < _cartStates[source]!.length) {
+              _cartStates[source]![i] = true;
+            }
           }
         }
-      }
 
-      // Update the current view's cart state
-      String source = selectedOption.toLowerCase();
-      if (_cartStates.containsKey(source) && 
-          _cartStates[source] != null && 
-          _cartStates[source]!.length == availableItems.length) {
-        _isInCart = List.from(_cartStates[source]!);
-      } else {
-        _isInCart = List.generate(availableItems.length, (index) => false);
-      }
+        String source = selectedOption.toLowerCase();
+        if (_cartStates.containsKey(source) && 
+            _cartStates[source] != null && 
+            _cartStates[source]!.length == availableItems.length) {
+          _isInCart = List.from(_cartStates[source]!);
+        } else {
+          _isInCart = List.generate(availableItems.length, (index) => false);
+        }
+      });
     });
-  });
-}
+  }
 
   Future<void> toggleFavorite(Map<String, dynamic> item, int index) async {
     try {
@@ -339,7 +309,6 @@ void _setupCartListener() {
   }
 
   Future<void> toggleCart(Map<String, dynamic> item, int index) async {
-    // Check bounds before proceeding
     if (index >= availableItems.length || index >= _isInCart.length) {
       print('Error: Index out of bounds in toggleCart');
       return;
@@ -361,7 +330,6 @@ void _setupCartListener() {
       if (doc.exists) {
         await docRef.delete();
         setState(() {
-          // Safely update the cart states with bounds checking
           if (_cartStates.containsKey(source) && 
               _cartStates[source] != null && 
               index < _cartStates[source]!.length) {
@@ -382,7 +350,6 @@ void _setupCartListener() {
           'source': source,
         });
         setState(() {
-          // Safely update the cart states with bounds checking
           if (_cartStates.containsKey(source) && 
               _cartStates[source] != null && 
               index < _cartStates[source]!.length) {
@@ -394,16 +361,16 @@ void _setupCartListener() {
           }
         });
         
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${item['title']} added to cart'),
-            backgroundColor: Color(0xFF53E3C6),
+            backgroundColor: const Color(0xFF53E3C6),
+            duration: const Duration(seconds: 1),
             action: SnackBarAction(
               label: 'VIEW CART',
               textColor: Colors.white,
               onPressed: () {
-                _onItemTapped(2); // Navigate to cart page
+                _onItemTapped(2);
               },
             ),
           ),
@@ -427,11 +394,44 @@ void _setupCartListener() {
   void _updateSelectedOption(String option) {
     setState(() {
       selectedOption = option;
-      // Reset search when changing categories
       _searchQuery = '';
       _searchController.clear();
     });
-    _loadDailyMenu(); // This will update availableItems and _filteredItems
+    _loadDailyMenu();
+  }
+
+  void _updateCardTouchPosition(int index, Offset localPosition, Size cardSize) {
+    setState(() {
+      _cardTouchPositions[index] = localPosition;
+      _cardsBeingTouched[index] = true;
+    });
+  }
+
+  void _resetCardTouchPosition(int index) {
+    setState(() {
+      _cardsBeingTouched[index] = false;
+    });
+  }
+
+  Matrix4 _getCardTransformMatrix(int index, Size cardSize) {
+    if (!(_cardsBeingTouched[index] ?? false) || !_cardTouchPositions.containsKey(index)) {
+      return Matrix4.identity();
+    }
+
+    final position = _cardTouchPositions[index]!;
+    
+    final double dx = (position.dx - (cardSize.width / 2)) / (cardSize.width / 2);
+    final double dy = (position.dy - (cardSize.height / 2)) / (cardSize.height / 2);
+    
+    final double rotateY = dx * 0.15;
+    final double rotateX = -dy * 0.1;
+    
+    return Matrix4.identity()
+      ..setEntry(3, 2, 0.001)
+      ..rotateX(rotateX)
+      ..rotateY(rotateY)
+      ..scale(1.02)
+      ..translate(0.0, 0.0, 20 * (1 - (dx.abs() + dy.abs()) / 2));
   }
 
   @override
@@ -455,10 +455,10 @@ void _setupCartListener() {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        backgroundColor: const Color(0xFF00122D), // Restored original dark blue background
-        selectedItemColor: const Color(0xFF53E3C6), // Teal for selected items
-        unselectedItemColor: Colors.white, // White for unselected items
-        type: BottomNavigationBarType.fixed, // Required for more than 3 items
+        backgroundColor: const Color(0xFF00122D),
+        selectedItemColor: const Color(0xFF53E3C6),
+        unselectedItemColor: Colors.white,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
@@ -477,13 +477,12 @@ void _setupCartListener() {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Color(0xFF00122D),
+      color: const Color(0xFF00122D),
       child: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with gradient
               Container(
                 padding: const EdgeInsets.only(top: 20, bottom: 20, left: 16, right: 16),
                 decoration: const BoxDecoration(
@@ -506,10 +505,9 @@ void _setupCartListener() {
                         Expanded(
                           child: Row(
                             children: [
-                              // Profile Image - Updated to display actual profile image
                               GestureDetector(
                                 onTap: () {
-                                  _onItemTapped(1); // Navigate to profile page
+                                  _onItemTapped(1);
                                 },
                                 child: Container(
                                   width: 40,
@@ -548,7 +546,7 @@ void _setupCartListener() {
                                                       ? loadingProgress.cumulativeBytesLoaded /
                                                         loadingProgress.expectedTotalBytes!
                                                       : null,
-                                                    color: Color(0xFF00122D),
+                                                    color: const Color(0xFF00122D),
                                                     strokeWidth: 2,
                                                   ),
                                                 ),
@@ -574,7 +572,7 @@ void _setupCartListener() {
                               const SizedBox(width: 10),
                               Flexible(
                                 child: _isLoadingUserData
-                                  ? SizedBox(
+                                  ? const SizedBox(
                                       height: 22,
                                       width: 120,
                                       child: LinearProgressIndicator(
@@ -584,7 +582,7 @@ void _setupCartListener() {
                                     )
                                   : Text(
                                       "Hello, $name",
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
@@ -612,21 +610,21 @@ void _setupCartListener() {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  backgroundColor: Color(0xFF00122D),
+                                  backgroundColor: const Color(0xFF00122D),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15),
                                   ),
-                                  title: Text('Logout', 
+                                  title: const Text('Logout', 
                                     style: TextStyle(color: Colors.white)
                                   ),
-                                  content: Text(
+                                  content: const Text(
                                     'Are you sure you want to logout?',
                                     style: TextStyle(color: Colors.white70)
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(context).pop(),
-                                      child: Text('Cancel', 
+                                      child: const Text('Cancel', 
                                         style: TextStyle(color: Colors.white70)
                                       ),
                                     ),
@@ -635,19 +633,19 @@ void _setupCartListener() {
                                         try {
                                           await FirebaseAuth.instance.signOut();
                                           if (context.mounted) {
-                                            Navigator.of(context).pop(); // Close dialog
+                                            Navigator.of(context).pop();
                                             Navigator.pushReplacementNamed(context, '/loginPage');
                                           }
                                         } catch (e) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
+                                            const SnackBar(
                                               content: Text('Error logging out. Please try again.'),
                                               backgroundColor: Colors.redAccent,
                                             ),
                                           );
                                         }
                                       },
-                                      child: Text('Logout',
+                                      child: const Text('Logout',
                                         style: TextStyle(color: Colors.redAccent)
                                       ),
                                     ),
@@ -673,7 +671,6 @@ void _setupCartListener() {
               
               const SizedBox(height: 16),
               
-              // Category options
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
@@ -693,13 +690,12 @@ void _setupCartListener() {
               
               const SizedBox(height: 20),
               
-              // Popular Food Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "Popular Foods",
                       style: TextStyle(
                         fontSize: 18,
@@ -713,7 +709,6 @@ void _setupCartListener() {
                 ),
               ),
               
-              // Add some bottom padding for scroll
               const SizedBox(height: 20),
             ],
           ),
@@ -735,16 +730,16 @@ void _setupCartListener() {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? Color(0xFF53E3C6) : Colors.white,
+              color: isSelected ? const Color(0xFF53E3C6) : Colors.white,
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: isSelected ? Color(0xFF53E3C6) : Colors.grey.shade300,
+                color: isSelected ? const Color(0xFF53E3C6) : Colors.grey.shade300,
               ),
               boxShadow: isSelected 
                 ? [BoxShadow(
-                    color: Color(0xFF53E3C6).withOpacity(0.3),
+                    color: const Color(0xFF53E3C6).withOpacity(0.3),
                     blurRadius: 8,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   )]
                 : null,
             ),
@@ -802,7 +797,7 @@ void _setupCartListener() {
                   _filteredItems = availableItems;
                 });
               },
-              child: Icon(Icons.clear, color: Colors.grey, size: 20),
+              child: const Icon(Icons.clear, color: Colors.grey, size: 20),
             ),
         ],
       ),
@@ -841,18 +836,16 @@ void _setupCartListener() {
       );
     }
     
-    // Calculate responsive grid parameters based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth > 600 ? 3 : 2; // More columns on wider screens
-    
+    final crossAxisCount = screenWidth > 600 ? 3 : 2;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 12, // Increased spacing
-        mainAxisSpacing: 12, // Increased spacing
-        childAspectRatio: 0.7, // Adjusted ratio to give more height for the larger elements
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.7,
       ),
       itemCount: itemsToDisplay.length,
       itemBuilder: (context, index) {
@@ -869,160 +862,182 @@ void _setupCartListener() {
         '${selectedOption.toLowerCase()}_${item['id'] ?? DateTime.now().toString()}';
     bool isFavorite = _favoriteStates[itemId] == true;
 
-    return Card(
-      elevation: 3, // Slightly increased elevation for better shadow
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Food Image
-          Stack(
+    return GestureDetector(
+      onTapDown: (details) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final localPosition = box.globalToLocal(details.globalPosition);
+        final cardSize = box.size;
+        _updateCardTouchPosition(index, localPosition, cardSize);
+      },
+      onTapUp: (details) => _resetCardTouchPosition(index),
+      onTapCancel: () => _resetCardTouchPosition(index),
+      onPanUpdate: (details) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final localPosition = box.globalToLocal(details.globalPosition);
+        final cardSize = box.size;
+        _updateCardTouchPosition(index, localPosition, cardSize);
+      },
+      onPanEnd: (details) => _resetCardTouchPosition(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        transform: _getCardTransformMatrix(index, const Size(160, 220)),
+        transformAlignment: Alignment.center,
+        child: Card(
+          elevation: (_cardsBeingTouched[index] ?? false) ? 8 : 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shadowColor: (_cardsBeingTouched[index] ?? false) 
+              ? const Color(0xFF53E3C6).withOpacity(0.5)
+              : Colors.black.withOpacity(0.2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                child: Container(
-                  height: 100, // Slightly increased height for image
-                  width: double.infinity,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                  ),
-                  child: Image.asset(
-                    item['imageUrl'],
-                    height: 80,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: GestureDetector(
-                  onTap: () => toggleFavorite(item, index),
-                  child: Container(
-                    padding: const EdgeInsets.all(6), // Increased padding
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : Colors.grey,
-                      size: 20, // Increased icon size
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          // Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(10.0), // Increased padding
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Stack(
                 children: [
-                  Text(
-                    item['title'],
-                    style: const TextStyle(
-                      fontSize: 16, // Increased font size
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF00122D),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                    child: Container(
+                      height: 100,
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                      ),
+                      child: Image.asset(
+                        item['imageUrl'],
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    selectedOption,
-                    style: TextStyle(
-                      fontSize: 12, // Increased font size
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '₹${item['price']}',
-                          style: const TextStyle(
-                            fontSize: 18, // Increased font size for price
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF900C3F),
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => toggleFavorite(item, index),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.grey,
+                          size: 20,
                         ),
                       ),
-                      // Layout buttons in a row with proper spacing
+                    ),
+                  ),
+                ],
+              ),
+              
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['title'],
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF00122D),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        selectedOption,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const Spacer(),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          GestureDetector(
-                            onTap: () => toggleCart(item, index),
-                            child: Container(
-                              padding: const EdgeInsets.all(8), // Increased padding
-                              decoration: BoxDecoration(
-                                color: isInCart ? Color(0xFF53E3C6) : Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(15),
+                          Expanded(
+                            child: Text(
+                              '₹${item['price']}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF900C3F),
                               ),
-                              child: Icon(
-                                isInCart ? Icons.shopping_cart : Icons.add_shopping_cart,
-                                color: isInCart ? Colors.white : Colors.grey.shade700,
-                                size: 22, // Increased icon size
-                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8), // Increased spacing
-                          GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  shape: RoundedRectangleBorder(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: () => toggleCart(item, index),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isInCart ? const Color(0xFF53E3C6) : Colors.grey.shade200,
                                     borderRadius: BorderRadius.circular(15),
                                   ),
-                                  title: Text(item['title']),
-                                  content: Text(item['description'] ?? 'No description available'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Close'),
-                                    ),
-                                  ],
+                                  child: Icon(
+                                    isInCart ? Icons.shopping_cart : Icons.add_shopping_cart,
+                                    color: isInCart ? Colors.white : Colors.grey.shade700,
+                                    size: 22,
+                                  ),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8), // Increased padding
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(15),
                               ),
-                              child: const Icon(
-                                Icons.info_outline,
-                                color: Colors.grey,
-                                size: 22, // Increased icon size
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      title: Text(item['title']),
+                                      content: Text(item['description'] ?? 'No description available'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Close'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: const Icon(
+                                    Icons.info_outline,
+                                    color: Colors.grey,
+                                    size: 22,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

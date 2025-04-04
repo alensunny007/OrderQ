@@ -86,4 +86,11 @@ List<Map<String, dynamic>> cafefoodItems = [
     'imageUrl': 'assets/images/cutlet.jpg',
     'description': 'Thinly sliced chicken that are breaded and fried to perfection.',
   },
+  {
+    'id': '12',
+    'title': 'Chicken Sandwich',
+    'price': '13',
+    'imageUrl': 'assets/images/chickensand.jpeg',
+    'description': 'Juicy chicken fillet served between two long slices of bread.',
+  },
 ];

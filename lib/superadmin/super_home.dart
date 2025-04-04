@@ -324,10 +324,9 @@ class _AdminDashboardState extends State<SuperHome> {
                       underline: const SizedBox(),
                       items: const [
                         DropdownMenuItem(value: 'all', child: Text('All Roles')),
+                        DropdownMenuItem(value: 'super', child: Text('Super')),
                         DropdownMenuItem(value: 'student', child: Text('Students')),
                         DropdownMenuItem(value: 'admin', child: Text('Admins')),
-                        DropdownMenuItem(value: 'canteen_manager', child: Text('Canteen Managers')),
-                        DropdownMenuItem(value: 'cafeteria_manager', child: Text('Cafeteria Managers')),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -420,95 +419,92 @@ class _AdminDashboardState extends State<SuperHome> {
                     );
                   }
 
-                  return ListView.builder(
-                    itemCount: filteredUsers.length,
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (context, index) {
-                      final user = filteredUsers[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          gradient: cardGradient,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFF53E3C6),
-                            child: Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                              style: const TextStyle(
-                                color: Color(0xFF00122D),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            user.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user.email,
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                              if (user.studentId != null && user.studentId!.isNotEmpty && user.role.toLowerCase() == 'student')
-                                Text(
-                                  'Student ID: ${user.studentId}',
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                              if (user.mobileNumber != null && user.mobileNumber!.isNotEmpty)
-                                Text(
-                                  'Phone: ${user.mobileNumber}',
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                              Text(
-                                'Role: ${_getRoleDisplayName(user.role)}',
-                                style: TextStyle(
-                                  color: _getRoleColor(user.role),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'Joined: ${user.dateJoined}',
-                                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                color: const Color(0xFF53E3C6),
-                                onPressed: () => _changeUserRole(user),
-                                tooltip: 'Change Role',
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.person_remove),
-                                color: Colors.redAccent,
-                                onPressed: () => _ejectUser(user),
-                                tooltip: 'Eject User',
-                              ),
-                            ],
-                          ),
-                          isThreeLine: true,
-                        ),
-                      );
-                    },
-                  );
+              return ListView.builder(
+  itemCount: filteredUsers.length,
+  padding: const EdgeInsets.all(16),
+  itemBuilder: (context, index) {
+    final user = filteredUsers[index];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: cardGradient,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF53E3C6),
+          child: Text(
+            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+            style: const TextStyle(
+              color: Color(0xFF00122D),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        title: Text(
+          user.name,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Email is now hidden for all users
+            if (user.studentId != null && user.studentId!.isNotEmpty && user.role.toLowerCase() == 'student')
+              Text(
+                'University ID: ${user.studentId}',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            // Phone number is now hidden for all users
+            Text(
+              'Role: ${_getRoleDisplayName(user.role)}',
+              style: TextStyle(
+                color: _getRoleColor(user.role),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'Joined: ${user.dateJoined}',
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Only show edit button if user is not a super role
+            if (user.role.toLowerCase() != 'super')
+              IconButton(
+                icon: const Icon(Icons.edit),
+                color: const Color(0xFF53E3C6),
+                onPressed: () => _changeUserRole(user),
+                tooltip: 'Change Role',
+              ),
+            // Only show eject button if user is not a super role
+            if (user.role.toLowerCase() != 'super')
+              IconButton(
+                icon: const Icon(Icons.person_remove),
+                color: Colors.redAccent,
+                onPressed: () => _ejectUser(user),
+                tooltip: 'Eject User',
+              ),
+          ],
+        ),
+        isThreeLine: true,
+      ),
+    );
+  },
+);
                 },
               ),
             ),
@@ -519,271 +515,328 @@ class _AdminDashboardState extends State<SuperHome> {
   }
 
   // Add user content (signup form)
-  Widget _buildAddUserContent() {
-    // Controllers for the form fields
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final fullNameController = TextEditingController();
-    final phoneController = TextEditingController();
+Widget _buildAddUserContent() {
+  // Controllers for the form fields
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final fullNameController = TextEditingController();
+  final phoneController = TextEditingController();
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(gradient: mainGradient),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20.0),
-                  child: Text(
-                    'Add New Admin',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+  // Field validation functions
+  bool isFullNameValid(String fullName) {
+    // Check if fullName contains only letters and spaces (no numbers or special characters)
+    final RegExp nameRegExp = RegExp(r'^[a-zA-Z\s]+$');
+    return nameRegExp.hasMatch(fullName);
+  }
+
+  bool isEmailValid(String email) {
+    // Check if email ends with gmail.com
+    return email.toLowerCase().endsWith('@gmail.com');
+  }
+
+  bool isPhoneValid(String phone) {
+    // Check if phone contains exactly 10 digits (no letters or special characters)
+    final RegExp phoneRegExp = RegExp(r'^[0-9]{10}$');
+    return phoneRegExp.hasMatch(phone);
+  }
+
+  return Container(
+    width: double.infinity,
+    height: double.infinity,
+    decoration: BoxDecoration(gradient: mainGradient),
+    child: SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.0),
+                child: Text(
+                  'Add New Admin',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                
-                // Form fields
-                const SizedBox(height: 20),
-                
-                TextField(
-                  controller: fullNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
+              ),
+              
+              // Form fields
+              const SizedBox(height: 20),
+              
+              TextField(
+                controller: fullNameController,
+                decoration: InputDecoration(
+                  labelText: 'Full Name',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
                   ),
-                  keyboardType: TextInputType.name,
-                  style: const TextStyle(color: Colors.white),
+                  helperText: 'Letters only, no numbers or special characters',
+                  helperStyle: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
-                
-                const SizedBox(height: 16),
-                
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
+                keyboardType: TextInputType.name,
+                style: const TextStyle(color: Colors.white),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.white),
+                  helperText: 'Must end with @gmail.com',
+                  helperStyle: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
-                
-                const SizedBox(height: 16),
-                
-                TextField(
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
                   ),
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white),
+                  helperText: 'Minimum 6 characters',
+                  helperStyle: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
-                
-                const SizedBox(height: 16),
-                
-                TextField(
-                  controller: phoneController,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              TextField(
+                controller: phoneController,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
                   ),
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white),
+                  helperText: 'Exactly 10 digits, numbers only',
+                  helperStyle: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
-                
-                const SizedBox(height: 30),
-                
-                // Add user button
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final email = emailController.text.trim();
-                      final password = passwordController.text.trim();
-                      final name = fullNameController.text.trim();
-                      final mobileNumber = phoneController.text.trim();
-                
-                      // Validate all fields
-                      if (email.isEmpty ||
-                          password.isEmpty ||
-                          name.isEmpty ||
-                          mobileNumber.isEmpty) {
-                        Fluttertoast.showToast(
-                          msg: 'Please fill in all fields.',
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.BOTTOM,
-                          backgroundColor: Colors.redAccent,
-                          textColor: Colors.white,
-                          fontSize: 14.0,
-                        );
-                        return;
-                      }
-                
-                      // Validate password length
-                      if (password.length < 6) {
-                        Fluttertoast.showToast(
-                          msg: 'Password must be at least 6 characters long.',
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.BOTTOM,
-                          backgroundColor: Colors.redAccent,
-                          textColor: Colors.white,
-                        );
-                        return;
-                      }
-                
-                      try {
-                        // Show loading indicator
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (BuildContext context) {
-                            return Dialog(
-                              backgroundColor: Colors.transparent,
-                              elevation: 0,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(tealColor),
-                                ),
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(color: Colors.white),
+              ),
+              
+              const SizedBox(height: 30),
+              
+              // Add user button
+              Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final email = emailController.text.trim();
+                    final password = passwordController.text.trim();
+                    final name = fullNameController.text.trim();
+                    final mobileNumber = phoneController.text.trim();
+              
+                    // Validate all fields
+                    if (email.isEmpty ||
+                        password.isEmpty ||
+                        name.isEmpty ||
+                        mobileNumber.isEmpty) {
+                      Fluttertoast.showToast(
+                        msg: 'Please fill in all fields.',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                        fontSize: 14.0,
+                      );
+                      return;
+                    }
+                    
+                    // Validate full name (no special characters or numbers)
+                    if (!isFullNameValid(name)) {
+                      Fluttertoast.showToast(
+                        msg: 'Full name must contain only letters (no numbers or special characters).',
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    
+                    // Validate email (must end with gmail.com)
+                    if (!isEmailValid(email)) {
+                      Fluttertoast.showToast(
+                        msg: 'Email must end with @gmail.com',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+              
+                    // Validate password length
+                    if (password.length < 6) {
+                      Fluttertoast.showToast(
+                        msg: 'Password must be at least 6 characters long.',
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+                    
+                    // Validate phone number (10 digits only)
+                    if (!isPhoneValid(mobileNumber)) {
+                      Fluttertoast.showToast(
+                        msg: 'Phone number must contain exactly 10 digits (numbers only).',
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.redAccent,
+                        textColor: Colors.white,
+                      );
+                      return;
+                    }
+              
+                    try {
+                      // Show loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(tealColor),
                               ),
-                            );
-                          },
-                        );
-                
-                        // Create user in Firebase Auth
-                        final userCredential = await auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
-                          email: email,
-                          password: password,
-                        );
-                
-                        // If signup is successful, add user details to Firestore with admin role
-                        if (userCredential.user != null) {
-                          final user = userCredential.user!;
-                          final today = DateTime.now().toString().split(' ')[0];
-                          
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(user.uid)
-                              .set({
-                            'name': name,
-                            'email': email,
-                            'mobileNumber': mobileNumber,
-                            'role': 'admin', // Set role to admin
-                            'dateJoined': today,
-                            'createdAt': FieldValue.serverTimestamp(),
-                            'lastUpdated': FieldValue.serverTimestamp(),
-                          });
-                          
-                          // Close loading dialog
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                
-                          // Show success message
-                          Fluttertoast.showToast(
-                            msg: 'Admin user created successfully!',
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.BOTTOM,
-                            backgroundColor: Colors.green,
-                            textColor: Colors.white,
+                            ),
                           );
-                
-                          // Clear form fields
-                          emailController.clear();
-                          passwordController.clear();
-                          fullNameController.clear();
-                          phoneController.clear();
-                
-                          // Go back to home tab
-                          setState(() {
-                            _selectedIndex = 0;
-                          });
-                        }
-                      } catch (e) {
-                        // Close loading dialog if it's open
+                        },
+                      );
+              
+                      // Create user in Firebase Auth
+                      final userCredential = await auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
+                        email: email,
+                        password: password,
+                      );
+              
+                      // If signup is successful, add user details to Firestore with admin role
+                      if (userCredential.user != null) {
+                        final user = userCredential.user!;
+                        final today = DateTime.now().toString().split(' ')[0];
+                        
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .set({
+                          'name': name,
+                          'email': email,
+                          'mobileNumber': mobileNumber,
+                          'role': 'admin', // Set role to admin
+                          'dateJoined': today,
+                          'createdAt': FieldValue.serverTimestamp(),
+                          'lastUpdated': FieldValue.serverTimestamp(),
+                        });
+                        
+                        // Close loading dialog
                         if (context.mounted) {
                           Navigator.of(context).pop();
                         }
-                        
-                        String errorMessage = e.toString();
-                        if (errorMessage.contains('email-already-in-use')) {
-                          errorMessage = 'This email is already registered';
-                        } else if (errorMessage.contains('invalid-email')) {
-                          errorMessage = 'Please enter a valid email address';
-                        } else if (errorMessage.contains('weak-password')) {
-                          errorMessage = 'Password is too weak';
-                        }
-                        
+              
+                        // Show success message
                         Fluttertoast.showToast(
-                          msg: 'Failed to create user: $errorMessage',
-                          toastLength: Toast.LENGTH_LONG,
+                          msg: 'Admin user created successfully!',
+                          toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.BOTTOM,
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: Colors.green,
                           textColor: Colors.white,
-                          fontSize: 14.0,
                         );
+              
+                        // Clear form fields
+                        emailController.clear();
+                        passwordController.clear();
+                        fullNameController.clear();
+                        phoneController.clear();
+              
+                        // Go back to home tab
+                        setState(() {
+                          _selectedIndex = 0;
+                        });
                       }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF53E3C6),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Text(
-                      'Add Admin User',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    } catch (e) {
+                      // Close loading dialog if it's open
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                      
+                      String errorMessage = e.toString();
+                      if (errorMessage.contains('email-already-in-use')) {
+                        errorMessage = 'This email is already registered';
+                      } else if (errorMessage.contains('invalid-email')) {
+                        errorMessage = 'Please enter a valid email address';
+                      } else if (errorMessage.contains('weak-password')) {
+                        errorMessage = 'Password is too weak';
+                      }
+                      
+                      // Use ScaffoldMessenger instead of Fluttertoast for consistency
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to create user: $errorMessage'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF53E3C6),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
+                  child: const Text(
+                    'Add Admin User',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Color _getRoleColor(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
         return const Color(0xFFFF5555);
-      case 'canteen_manager':
-        return const Color(0xFF53E3C6);
-      case 'cafeteria_manager':
-        return const Color(0xFF64B5F6);
       case 'student':
         return const Color(0xFFE040FB);
       default:
@@ -795,10 +848,6 @@ class _AdminDashboardState extends State<SuperHome> {
     switch (role.toLowerCase()) {
       case 'admin':
         return 'Admin';
-      case 'canteen_manager':
-        return 'Canteen Manager';
-      case 'cafeteria_manager':
-        return 'Cafeteria Manager';
       case 'student':
         return 'Student';
       default:
@@ -807,30 +856,41 @@ class _AdminDashboardState extends State<SuperHome> {
   }
 
   // Ejection dialog with Firestore integration
-  Future<void> _ejectUser(User user) async {
-    bool confirm = await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF00122D),
-          title: const Text('Confirm Ejection', style: TextStyle(color: Colors.white)),
-          content: Text(
-            'Are you sure you want to eject ${user.name}?',
-            style: const TextStyle(color: Colors.white70),
+ Future<void> _ejectUser(User user) async {
+  // Do not allow ejecting super users
+  if (user.role.toLowerCase() == 'super') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Super users cannot be ejected.'),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
+    return;
+  }
+
+  bool confirm = await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF00122D),
+        title: const Text('Confirm Ejection', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Are you sure you want to eject ${user.name}?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Eject', style: TextStyle(color: Colors.redAccent)),
-            ),
-          ],
-        );
-      },
-    ) ?? false;
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eject', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      );
+    },
+  ) ?? false;
 
     if (confirm) {
       try {
@@ -881,54 +941,51 @@ class _AdminDashboardState extends State<SuperHome> {
     }
   }
 
-  // Role change dialog with Firestore integration
-  Future<void> _changeUserRole(User user) async {
-    String? newRole = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF00122D),
-          title: const Text('Change Role', style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Select new role for ${user.name}',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: const Text('Admin', style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.of(context).pop('admin'),
-                tileColor: Colors.white.withOpacity(0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                title: const Text('Canteen Manager', style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.of(context).pop('canteen_manager'),
-                tileColor: Colors.white.withOpacity(0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                title: const Text('Cafeteria Manager', style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.of(context).pop('cafeteria_manager'),
-                tileColor: Colors.white.withOpacity(0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                title: const Text('Student', style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.of(context).pop('student'),
-                tileColor: Colors.white.withOpacity(0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),],
-          ),
-        );
-      },
+ 
+Future<void> _changeUserRole(User user) async {
+  // Do not allow role changes for super users
+  if (user.role.toLowerCase() == 'super') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Super users cannot have their role changed.'),
+        backgroundColor: Colors.redAccent,
+      ),
     );
+    return;
+  }
 
+  String? newRole = await showDialog<String>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF00122D),
+        title: const Text('Change Role', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select new role for ${user.name}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              title: const Text('Admin', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.of(context).pop('admin'),
+              tileColor: Colors.white.withOpacity(0.1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              title: const Text('Student', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.of(context).pop('student'),
+              tileColor: Colors.white.withOpacity(0.1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ],
+        ),
+      );
+    },
+  );
     if (newRole != null && newRole.toLowerCase() != user.role.toLowerCase()) {
       try {
         // Show loading indicator

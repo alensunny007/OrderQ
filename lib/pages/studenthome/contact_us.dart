@@ -131,7 +131,7 @@ class ContactUsPage extends StatelessWidget {
                         // Team Member 2
                         Expanded(
                           child: _teamMemberCard(
-                            name: "Aasif Abdullah",
+                            name: "Aasif",
                             role: "Project Manager",
                             avatarColor: Colors.pink.withOpacity(0.2),
                             icon: Icons.manage_accounts,

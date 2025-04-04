@@ -5,14 +5,14 @@ List<Map<String, dynamic>> foodItems = [
   {
     'id': '0',
     'title': 'Meals',
-    'price': '25',
+    'price': '30',
     'imageUrl': 'assets/images/meal.jpg',
     'description': 'A delicious traditional meal.',
   },
   {
     'id': '1',
     'title': 'Biriyani',
-    'price': '60',
+    'price': '65',
     'imageUrl': 'assets/images/biriyani.jpg',
     'description': 'A rice dish with meat.',
   },
@@ -110,7 +110,7 @@ List<Map<String, dynamic>> foodItems = [
     {
       'id': '16',
       'title': 'Biriyani Rice',
-      'price': '40',
+      'price': '45',
       'imageUrl': 'assets/images/biriyanirice.jpg',
       'description': 'Biriyani rice with chicken.',
     },
