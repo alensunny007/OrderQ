@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uuid/uuid.dart'; 
+import 'package:uuid/uuid.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PaymentPage extends StatefulWidget {
   final String userId;
@@ -21,6 +23,27 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   bool isProcessingPayment = false;
+  late Razorpay _razorpay;
+  final uuid = Uuid();
+  late String orderId;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    
+    // Generate order ID at initialization
+    orderId = 'ORD${uuid.v4().replaceAll('-', '').substring(0, 12)}';
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +140,33 @@ class _PaymentPageState extends State<PaymentPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildPaymentOption(
+                        'Razorpay',
+                        'assets/images/razorpay.png',
+                        Icons.payment,
+                        () => _openRazorpayCheckout(),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // UPI App Selection
+                  const Text(
+                    'Select UPI App',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 15),
+                  
+                  // UPI Apps
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildPaymentOption(
                         'Google Pay',
                         'assets/images/google-pay.png',
                         Icons.account_balance_wallet,
@@ -153,31 +203,6 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       ),
                     ],
-                  ),
-
-                  const SizedBox(height: 20),
-                  
-                  // Generic UPI Option
-                  Center(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _launchUpiPayment(
-                        context, 
-                        'generic', 
-                        widget.total, 
-                        widget.userId, 
-                        widget.items
-                      ),
-                      icon: const Icon(Icons.payment, color: Color(0xFF53E3C6)),
-                      label: const Text('Other UPI Apps'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF53E3C6),
-                        side: const BorderSide(color: Color(0xFF53E3C6)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                    ),
                   ),
                   
                   const Spacer(),
@@ -247,8 +272,8 @@ class _PaymentPageState extends State<PaymentPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 90,
-            height: 90,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
@@ -267,13 +292,13 @@ class _PaymentPageState extends State<PaymentPage> {
                 padding: const EdgeInsets.all(8),
                 child: Image.asset(
                   imagePath,
-                  width: 74,
-                  height: 74,
+                  width: 64,
+                  height: 64,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Icon(
                     fallbackIcon,
-                    size: 45,
-                    color: Colors.white70,
+                    size: 40,
+                    color: const Color(0xFF001736),
                   ),
                 ),
               ),
@@ -282,14 +307,123 @@ class _PaymentPageState extends State<PaymentPage> {
           const SizedBox(height: 10),
           Text(
             name,
-            style: const TextStyle(fontSize: 15, color: Colors.white),
+            style: const TextStyle(fontSize: 14, color: Colors.white),
           ),
         ],
       ),
     );
   }
 
-  // Simplified UPI payment launcher
+
+
+// Inside your _openRazorpayCheckout method:
+
+void _openRazorpayCheckout() async {
+  setState(() {
+    isProcessingPayment = true;
+  });
+
+  try {
+    // Create a pending order in your database
+    await _createPendingOrder(widget.userId, orderId, widget.items, widget.total);
+
+    // Convert amount to paise
+    int amountInPaise = (widget.total * 100).toInt();
+
+    // This should be your test/live API key from Razorpay dashboard
+    String razorpayKey = dotenv.get('RAZORPAY_KEY_ID');
+    if (razorpayKey.isEmpty) {
+      throw Exception("Razorpay API key is missing");
+    }
+    var options = {
+      'key': razorpayKey,
+      'amount': amountInPaise,
+      'name': 'Food Order',
+      'description': 'Order #$orderId',
+      'timeout': 120, 
+      'prefill': {
+        'contact': '', 
+        'email': ''
+      },
+      'theme': {
+        'color': '#00122D'
+      }
+    };
+
+    _razorpay.open(options);
+  } catch (e) {
+    setState(() {
+      isProcessingPayment = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error initializing payment: ${e.toString()}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    setState(() {
+      isProcessingPayment = false;
+    });
+    
+    try {
+      // Update order status
+      await _updateOrderStatus(widget.userId, orderId, 'confirmed');
+      
+      // Clear the cart
+      await _clearCart(widget.userId);
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payment successful! Order placed.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      // Navigate back to home or order confirmation page
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error processing order: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    setState(() {
+      isProcessingPayment = false;
+    });
+    
+    _updateOrderStatus(widget.userId, orderId, 'failed');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment failed: ${response.message ?? "Unknown error"}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    setState(() {
+      isProcessingPayment = false;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment processing through ${response.walletName}'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  // UPI payment launcher (keeping the existing implementation)
   Future<void> _launchUpiPayment(BuildContext context, String appName,
       double amount, String userId, List<Map<String, dynamic>> items) async {
     setState(() {
@@ -297,11 +431,8 @@ class _PaymentPageState extends State<PaymentPage> {
     });
 
     try {
-      // Generate a UPI-compatible transaction ID (alphanumeric only, no special chars)
-      // Use uuid to generate a unique ID and take first 12 characters
-      final uuid = Uuid();
-      String txnId = uuid.v4().replaceAll('-', '').substring(0, 12);
-      String orderId = 'ORD$txnId';
+      // Use the existing order ID for consistency
+      String txnId = orderId.substring(3); // Remove 'ORD' prefix for transaction ID
 
       // Create order in Firestore first (pending status)
       await _createPendingOrder(userId, orderId, items, amount);

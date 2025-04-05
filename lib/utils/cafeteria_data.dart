@@ -89,7 +89,7 @@ List<Map<String, dynamic>> cafefoodItems = [
   {
     'id': '12',
     'title': 'Chicken Sandwich',
-    'price': '13',
+    'price': '25',
     'imageUrl': 'assets/images/chickensand.jpeg',
     'description': 'Juicy chicken fillet served between two long slices of bread.',
   },

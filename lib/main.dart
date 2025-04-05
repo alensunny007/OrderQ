@@ -5,7 +5,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:orderq/Students/signupwithcredentials.dart';
 import 'package:orderq/pages/loginpage.dart';
 import 'package:orderq/pages/studenthome/order.dart';
-
 import 'pages/loading.dart';
 
 void main() async {
@@ -16,7 +15,6 @@ void main() async {
   
   // Initialize Firebase
   await Firebase.initializeApp();
-  
   runApp(const MyApp());
 }
 
