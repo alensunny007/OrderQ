@@ -1,6 +1,6 @@
 # orderq
 
-A canteen management flutter app which users can view food items and order it seamlessly.
+A canteen management android app where students and staffs can view daily food items and order it  specialy made for college of engineering vadakara.
 
 ## Getting Started
 
